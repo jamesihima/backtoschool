@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Back to School — v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.184.0/build/three.module.js"},
+ "integrity":{"https://unpkg.com/three@0.184.0/build/three.module.js":"sha384-8FCZ1eVO6it4+pbec2aDtnTrwjWXZLJRC+MAGCIPDgsYnUrl/E0A2YlF8ioMKI/J","https://unpkg.com/three@0.184.0/build/three.core.js":"sha384-dw2ooPewaEIrAgl6oFDBmmBWCE9oW9LxRGcfwZ0hLvEprzo202wXl7vCYHRlSnOT"}}
+</script>
+<script src="./world/world-data.js"></script>
+<style>
+:root{--ink:#3a2a30;--paper:#f5ead3;--ochre:#e3a347;--sage:#55745c;--brick:#a8553f;--plum:#4a3340;}
+html,body{margin:0;height:100%;overflow:hidden;background:#3b2b33;font-family:'Atkinson Hyperlegible',system-ui,sans-serif;color:var(--ink);-webkit-user-select:none;user-select:none;}
+*{box-sizing:border-box;}
+a{color:var(--brick);}a:hover{color:var(--plum);}
+#root{position:fixed;inset:0;}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;}
+.hand{font-family:'Patrick Hand',cursive;}
+.card{background:var(--paper);border:2.5px solid var(--ink);border-radius:14px;box-shadow:0 4px 0 var(--ink);}
+.btn{font-family:'Patrick Hand',cursive;font-size:20px;padding:7px 16px;border-radius:12px;border:2.5px solid var(--ink);background:var(--paper);color:var(--ink);cursor:pointer;box-shadow:0 4px 0 var(--ink);transition:transform .08s;}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink);}
+.btn.pri{background:var(--ochre);}.btn.go{background:var(--sage);color:#fff;}
+.hide{display:none !important;}
+#top{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;z-index:5;pointer-events:none;flex-wrap:wrap;}
+#top>*{pointer-events:auto;}
+#prof{display:flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;}
+#prof img{width:46px;height:46px;border-radius:50%;object-fit:cover;object-position:50% 35%;border:2.5px solid var(--ink);background:#f2ead8;}
+.xpbar{height:9px;width:130px;background:#e0cfae;border-radius:6px;overflow:hidden;border:1.5px solid var(--ink);}
+.xpbar>div{height:100%;background:var(--sage);transition:width .4s;}
+#purse{display:flex;gap:8px;}
+.chip{display:flex;align-items:center;gap:6px;padding:5px 12px;font-weight:700;font-size:15px;}
+.coin{width:18px;height:18px;border-radius:50%;background:#f0c24a;border:2px solid var(--ink);display:inline-block;}
+#clsHud{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:8px;align-items:stretch;flex-wrap:wrap;justify-content:center;width:max-content;max-width:calc(100% - 16px);}
+#tPill{padding:6px 18px;font-size:24px;min-width:230px;text-align:center;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+#susBox{padding:6px 12px;}
+#desk{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);width:min(660px,calc(100% - 16px));z-index:6;padding:10px 12px;transition:transform .18s ease-out;}
+#desk.down{transform:translate(-50%,calc(100% - 50px));}
+#desk.down #deskBody{pointer-events:none;}
+#intHud{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:10px;align-items:center;padding:6px 8px 6px 16px;max-width:calc(100% - 20px);}
+#phone{position:absolute;inset:0;z-index:12;background:rgba(40,28,34,.35);display:flex;align-items:center;justify-content:center;}
+#phBody{width:min(340px,calc(100% - 24px));height:min(640px,calc(100% - 24px));background:#f5ead3;border:3px solid #3a2a30;border-radius:34px;box-shadow:0 6px 0 #3a2a30;padding:14px 14px 12px;display:flex;flex-direction:column;}
+#phScr{flex:1;overflow:auto;padding:2px;}
+#povHud{position:absolute;inset:0;z-index:7;pointer-events:none;}
+#povLook{position:absolute;right:0;top:70px;bottom:0;width:55%;pointer-events:auto;touch-action:none;}
+#povJoy{position:absolute;left:24px;bottom:28px;width:130px;height:130px;border-radius:50%;background:rgba(245,234,211,.4);border:2.5px solid rgba(58,42,48,.6);pointer-events:auto;touch-action:none;}
+#povJoy div{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:#f5ead3;border:2.5px solid #3a2a30;box-shadow:0 3px 0 #3a2a30;}
+#povTop{position:absolute;right:12px;bottom:28px;display:flex;gap:8px;pointer-events:auto;}
+#povX{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff;border:1.5px solid #3a2a30;}
+#invite{position:absolute;left:50%;top:84px;transform:translateX(-50%);z-index:8;display:flex;gap:10px;align-items:center;padding:8px 10px;width:min(460px,calc(100% - 20px));animation:tin .25s ease-out;}
+#impHud{position:absolute;top:10px;left:10px;z-index:6;padding:10px 14px;width:min(280px,calc(100% - 20px));}
+#dock{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:8px;z-index:5;padding:8px;max-width:calc(100% - 16px);overflow-x:auto;}
+.act{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:86px;padding:8px 10px;border-radius:12px;border:2.5px solid var(--ink);background:#fff8ea;cursor:pointer;box-shadow:0 3px 0 var(--ink);font-family:inherit;color:var(--ink);position:relative;flex:none;}
+.act:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink);}
+.act b{font-family:'Patrick Hand',cursive;font-size:19px;font-weight:400;line-height:1;}
+.act small{font-size:10px;font-weight:700;opacity:.75;}
+.act.big{background:var(--ochre);min-width:110px;}
+.act.lock{background:#e6d9be;}
+.act .dot{position:absolute;top:-6px;right:-6px;background:var(--brick);color:#fff;font-size:11px;font-weight:700;border-radius:10px;padding:1px 6px;border:2px solid var(--ink);}
+.glyph{width:30px;height:30px;border-radius:8px;border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;background:#fff;}
+#prompt{position:absolute;left:50%;bottom:112px;transform:translateX(-50%);display:flex;gap:10px;align-items:center;padding:8px 10px 8px 16px;z-index:6;max-width:calc(100% - 24px);flex-wrap:wrap;justify-content:center;}
+#toasts{position:absolute;top:84px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;z-index:9;pointer-events:none;width:min(520px,calc(100% - 24px));}
+#toasts div{background:#fff3c4;border:2.5px solid var(--ink);border-radius:12px;padding:6px 14px;font-size:14px;font-weight:700;box-shadow:0 3px 0 var(--ink);animation:tin .25s ease-out;}
+@keyframes tin{from{opacity:0;transform:translateY(-8px) scale(.96)}to{opacity:1;transform:none}}
+#sheet{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(40,25,32,0.55);}
+#sheetBox{max-width:480px;width:100%;max-height:calc(100% - 20px);overflow:auto;padding:18px;display:flex;flex-direction:column;gap:12px;}
+.row{display:flex;gap:10px;align-items:center;}
+.opt{display:flex;gap:12px;align-items:center;text-align:left;padding:10px 12px;border-radius:12px;border:2.5px solid var(--ink);background:#fff;cursor:pointer;font-family:inherit;color:var(--ink);width:100%;box-shadow:0 3px 0 var(--ink);}
+.opt:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink);}
+.opt.lock{background:#efe4cc;cursor:default;}
+.opt b{font-family:'Patrick Hand',cursive;font-size:22px;font-weight:400;display:block;line-height:1.05;}
+.opt small{font-size:12px;opacity:.8;display:block;}
+.tag{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;border:2px solid var(--ink);background:#fff3c4;white-space:nowrap;}
+.qbar{height:8px;background:#e0cfae;border-radius:5px;overflow:hidden;border:1.5px solid var(--ink);margin-top:4px;}.qbar>div{height:100%;background:var(--ochre);}
+#runHud{position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;z-index:6;pointer-events:none;}
+#runHud .card{padding:6px 14px;}
+#rDist{font-family:'Patrick Hand',cursive;font-size:40px;line-height:.9;}
+#pws{display:flex;gap:6px;margin-top:6px;}#pws span{font-size:12px;font-weight:700;padding:3px 9px;border-radius:10px;border:2px solid var(--ink);color:#fff;}
+#rTap{position:absolute;left:0;right:0;bottom:22%;text-align:center;z-index:6;pointer-events:none;}
+#rTap div{display:inline-block;padding:10px 20px;}
+#rPause{position:absolute;right:10px;bottom:12px;z-index:7;}
+#big{position:absolute;left:0;right:0;top:32%;text-align:center;font-family:'Patrick Hand',cursive;font-size:clamp(54px,10vw,110px);color:#fff3c4;-webkit-text-stroke:3px var(--ink);text-shadow:0 6px 0 var(--ink);pointer-events:none;z-index:8;opacity:0;}
+#big.show{animation:pop 1.1s ease-out forwards;}
+@keyframes pop{0%{opacity:0;transform:scale(.4)}15%{opacity:1;transform:scale(1.15)}30%{transform:scale(1)}80%{opacity:1}100%{opacity:0}}
+#fade{position:absolute;inset:0;background:#3b2b33;opacity:0;pointer-events:none;transition:opacity .3s;z-index:12;}
+#title{position:absolute;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px;background:linear-gradient(180deg,rgba(59,43,51,0.15),rgba(59,43,51,0.6));}
+#tBox{max-width:500px;width:100%;padding:22px;display:flex;flex-direction:column;gap:14px;}
+.pick{display:flex;gap:12px;}
+.pick button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px;border-radius:12px;border:2.5px solid var(--ink);background:#fff;cursor:pointer;font-family:'Patrick Hand',cursive;font-size:22px;color:var(--ink);}
+.pick button.on{background:var(--ochre);box-shadow:0 4px 0 var(--ink);}
+.pick img{height:78px;width:78px;object-fit:cover;object-position:50% 30%;border-radius:50%;border:2px solid var(--ink);}
+.stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.stat3 div{background:#fff;border:2px solid var(--ink);border-radius:10px;padding:8px;text-align:center;}
+.stat3 b{display:block;font-family:'Patrick Hand',cursive;font-size:30px;line-height:1;}
+.stat3 small{font-size:11px;font-weight:700;opacity:.7;}
+#top{top:max(10px,env(safe-area-inset-top));left:calc(10px + env(safe-area-inset-left));right:calc(10px + env(safe-area-inset-right));}
+#dock{bottom:calc(12px + env(safe-area-inset-bottom));}
+#gfx{font-size:15px;padding:3px 12px;}
+#rot{position:absolute;inset:0;z-index:40;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:#3b2b33;color:#f5ead3;}
+#rot .ph{width:56px;height:96px;border:3px solid #f5ead3;border-radius:12px;animation:rot 1.8s ease-in-out infinite;}
+@keyframes rot{0%,25%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+@media (orientation:portrait) and (pointer:coarse){#rot:not(.off){display:flex;}}
+@media (max-height:520px){
+ #top{top:6px;}#prof{padding:3px 10px 3px 3px;gap:6px;}#prof img{width:34px;height:34px;}#prof .hand{font-size:17px !important;}.xpbar{width:90px;}
+ .chip{padding:3px 9px;font-size:13px;}.coin{width:15px;height:15px;}
+ #dock{bottom:calc(5px + env(safe-area-inset-bottom));padding:5px;gap:5px;}.act{min-width:62px;padding:4px 7px;}.act b{font-size:15px;}.act small{font-size:9px;}.act.big{min-width:78px;}
+ #prompt{bottom:70px;padding:4px 8px 4px 12px;}#toasts{top:52px;}#toasts div{font-size:12px;padding:4px 10px;}#invite{top:52px;}
+ #sheet{padding:6px;}#sheetBox{max-height:calc(100% - 6px);padding:12px;gap:8px;max-width:600px;}
+ .opt{padding:6px 10px;gap:8px;}.opt b{font-size:18px;}.btn{font-size:17px;padding:4px 12px;}
+ #tBox{max-height:calc(100% - 6px);overflow:auto;padding:14px;gap:8px;max-width:640px;}#tBox>.hand:nth-child(2){font-size:40px !important;}
+ .pick img{height:50px;width:50px;}.pick button{padding:5px;font-size:18px;flex-direction:row;justify-content:center;gap:10px;}
+ #clsHud{top:5px;}#tPill{font-size:18px;min-width:160px;padding:3px 12px;}#desk{padding:6px 10px;bottom:4px;}
+ #intHud{top:5px;padding:3px 6px 3px 12px;}#rDist{font-size:28px;}#runHud .card{padding:4px 10px;}
+ #povJoy{width:100px;height:100px;left:calc(14px + env(safe-area-inset-left));bottom:12px;}#povJoy div{width:44px;height:44px;margin:-22px 0 0 -22px;}#povTop{bottom:12px;}
+ #phBody{height:calc(100% - 10px);border-radius:24px;padding:10px;}
+ .stat3 b{font-size:24px;}
+}
+@media (max-width:600px){.xpbar{width:90px;}.act{min-width:66px;}#tBox>.hand:nth-child(2){font-size:46px !important;}}
+</style>
+</head>
+<body>
+<div id="root">
+<canvas id="c"></canvas>
+<div id="fade"></div>
+
+<div id="top" class="hide">
+  <div id="prof" class="card"><img id="face" src="assets/boy-face.png" alt="You"><div style="display:flex;flex-direction:column;gap:3px;"><span class="hand" style="font-size:22px;line-height:1;white-space:nowrap;">Level <span id="lvl">1</span> · <span id="rank">JSS Newbie</span></span><div class="xpbar"><div id="xp" style="width:0%"></div></div></div></div>
+  <div id="purse"><div class="card chip"><span class="coin"></span><span id="bank">0</span></div><button class="card chip" id="phBtn" style="cursor:pointer;font-family:inherit;color:inherit;position:relative;"><span style="width:11px;height:17px;border:2px solid var(--ink);border-radius:3px;display:inline-block;"></span>Phone<span id="phB" style="display:none;position:absolute;right:-6px;top:-6px;background:#a8553f;color:#fff;border:2px solid #fff;border-radius:10px;font-size:11px;padding:0 5px;"></span></button><div class="card chip" title="Daily streak">Day <span id="streak">1</span> streak</div></div>
+</div>
+<div id="dock" class="card hide"></div>
+<div id="impHud" class="card hide"></div>
+<div id="invite" class="card hide"></div>
+<div id="phone" class="hide"><div id="phBody"><div style="width:70px;height:6px;border-radius:3px;background:#3a2a30;margin:0 auto 8px;opacity:.8;"></div><div id="phScr"></div><button class="btn" id="phX" style="margin-top:8px;width:100%;">Close phone</button></div></div>
+<div id="povHud" class="hide"><div id="povLook"></div><div id="povJoy"><div></div></div><div id="povTop"><button class="btn" id="povRun">Run</button><button class="btn" id="povExit">Map view</button></div><div id="povX"></div></div>
+<div id="intHud" class="card hide"><span class="hand" id="intName" style="font-size:24px;line-height:1;white-space:nowrap;"></span><button class="btn pri" id="intAct">Activities</button><button class="btn" id="intExit">Exit</button></div>
+<div id="clsHud" class="hide"><div id="tPill" class="card hand">Writing on the board</div><div id="susBox" class="card"><div style="font-size:11px;font-weight:700;">SUSPICION</div><div class="qbar" style="width:150px;"><div id="susFill" style="width:0%;background:#a8553f"></div></div></div><button class="btn" id="clsLeave">Leave</button></div>
+<div id="desk" class="card hide"><div class="row" style="justify-content:space-between;margin-bottom:6px;"><span class="hand" id="deskT" style="font-size:22px;">Whot</span><button class="btn" id="hideB" style="font-size:16px;padding:3px 12px;">Hide (Space)</button></div><div id="deskBody"></div></div>
+<div id="prompt" class="card hide"><span class="hand" id="promptT" style="font-size:21px;"></span><button class="btn pri" id="promptB"></button></div>
+
+<div id="runHud" class="hide">
+  <div class="card"><div id="rDist">0m</div><div style="font-size:12px;font-weight:700;"><span id="rBestL">Best</span> <span id="rBest">0</span></div><div id="pws"></div></div>
+  <div class="card chip" style="font-size:22px;"><span class="coin"></span><span id="rCoins">0</span></div>
+</div>
+<div id="rTap" class="hide"><div class="card hand" style="font-size:24px;">Tap or press Space to run<br><span style="font-family:'Atkinson Hyperlegible';font-size:13px;">← → or swipe to switch lanes · ↑ jump benches · ↓ slide under banners</span></div></div>
+<button id="rPause" class="btn hide">Pause</button>
+
+<div id="toasts"></div>
+<div id="big"></div>
+<div id="sheet" class="hide"><div id="sheetBox" class="card"></div></div>
+
+<div id="rot"><div class="ph"></div><div class="hand" style="font-size:30px;">Turn your phone sideways</div><div style="font-size:14px;opacity:.8;">Back to School plays best in landscape.</div><button class="btn" id="rotOk" style="font-size:16px;">Play in portrait anyway</button></div>
+<div id="title">
+  <div id="tBox" class="card">
+    <div class="hand" style="font-size:18px;color:var(--brick);">Unity Secondary School, Abuja</div>
+    <div class="hand" style="font-size:60px;line-height:.85;">Back to School</div>
+    <div style="font-size:15px;line-height:1.5;">Skip class or sit through it. Then run, play and level up between activities.</div>
+    <div class="pick"><button id="pBoy" class="on"><img src="assets/boy-face.png" alt="">Boy</button><button id="pGirl"><img src="assets/girl-face.png" alt="">Girl</button></div>
+    <div class="row" style="flex-wrap:wrap;"><button class="btn pri" id="go" style="font-size:24px;">Enter the school →</button><span id="loading" style="font-size:13px;opacity:.7;">Building the town…</span></div>
+  </div>
+</div>
+</div>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#e3a347"/><text x="50" y="64" font-size="38" text-anchor="middle" fill="#3a2a30" font-family="sans-serif" font-weight="700">BtS</text></svg></template>
+<script type="module">
+import * as THREE from 'three';
+import {makePerson,poseUpdate,playerLook,label,Walker} from './3d/common.js';
+import {makePost} from './3d/v3/look.js';
+import {buildWorld} from './3d/v3/world.js';
+import {createRunner} from './3d/v3/runner.js';
+import {createImpostor} from './3d/v3/impostor.js';
+import {createClassroom} from './3d/v3/classroom.js';
+import * as DG from './3d/v3/deskgames.js';
+import {createSoccer} from './3d/v3/soccer.js';
+import {createExcursion} from './3d/v3/excursion.js';
+import {DESTINATIONS,OLUMO,TAJ} from './3d/v3/excursion-data.js';
+import {createInterior} from './3d/v3/interiors.js';
+const $=id=>document.getElementById(id);const W=window.BTS_WORLD;const canvas=$('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:false,preserveDrawingBuffer:false,powerPreference:'high-performance'});
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
+const post=makePost(renderer);
+const MOB=matchMedia('(pointer:coarse)').matches||/Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
+const QPR=[0.7,1,1.25],QSH=[0,512,1024],QN=['Low','Medium','High'];let QL=2,QAUTO=false;
+function applyQ(){renderer.setPixelRatio(Math.min(devicePixelRatio,QPR[QL]));renderer.shadowMap.enabled=QL>0;post.setShadowEvery(QL>=2?3:6);lw=-1;}
+function qScene(sc){if(sc.userData.q===QL)return;sc.userData.q=QL;const sz=QSH[QL]||512;sc.traverse(o=>{if(o.isLight&&o.shadow&&o.castShadow){const mx=o.isPointLight?Math.min(sz,512):sz;if(o.shadow.mapSize.x!==mx){o.shadow.mapSize.set(mx,mx);if(o.shadow.map){o.shadow.map.dispose();o.shadow.map=null;}}}});renderer.shadowMap.needsUpdate=true;}
+const FPS={n:0,t:0,warm:4,mode:''};
+function fpsTick(dt,m){if(m!==FPS.mode){FPS.mode=m;FPS.warm=4;FPS.n=0;FPS.t=0;}if(FPS.warm>0){FPS.warm-=dt;return;}FPS.n++;FPS.t+=dt;if(FPS.t<3)return;const fps=FPS.n/FPS.t;FPS.n=0;FPS.t=0;if(QAUTO&&fps<42&&QL>0&&!document.hidden){QL--;applyQ();FPS.warm=3;}}
+{const _pr=post.render;let pt=performance.now();post.render=(sc,cam,t)=>{const n=performance.now(),d=Math.min(0.25,(n-pt)/1000);pt=n;fpsTick(d,mode);qScene(sc);_pr(sc,cam,t);};}
+const setTx=(id,v)=>{const e=$(id);if(e.__v!==v){e.__v=v;e.textContent=v;}};
+const iso=new THREE.OrthographicCamera(-1,1,1,-1,-200,400);
+let VIEW=30;
+let lw=0,lh=0;let prSet=0;function applyPR(){const p=Math.min(devicePixelRatio,QPR[QL]);if(p!==prSet){prSet=p;renderer.setPixelRatio(p);}}function resize(){applyPR();const w=canvas.clientWidth,h=canvas.clientHeight;if(!w||!h)return;lw=w;lh=h;renderer.setSize(w,h,false);post.setSize(w,h);const a=w/h;iso.left=-VIEW*a/2;iso.right=VIEW*a/2;iso.top=VIEW/2;iso.bottom=-VIEW/2;iso.updateProjectionMatrix();if(R){R.camera.aspect=a;R.camera.updateProjectionMatrix();}if(CL){CL.camera.aspect=a;CL.camera.updateProjectionMatrix();}if(SO)SO.resize(a);if(EX)EX.resize(a);if(IN)IN.resize(a);}
+// ---------- save / progression ----------
+const KEY='bts3_save';const today=()=>new Date().toISOString().slice(0,10);
+const def={gender:'boy',bank:0,xp:0,lvl:1,best:0,runs:0,owned:['base'],wear:{shirt:'base',hair:'base',extra:'none'},streak:0,lastDay:'',quests:null,qDay:''};
+let SV;try{SV={...def,...JSON.parse(localStorage.getItem(KEY)||'{}')};}catch(e){SV={...def};}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(SV));}catch(e){}};
+const RANKS=['JSS Newbie','Class Clown','Back-bencher','Canteen Regular','Runner','Class Rep','Prefect','Senior Prefect','Head Boy/Girl','School Legend'];
+const xpNeed=l=>80+l*60;
+function addXP(n){SV.xp+=n;let up=false;while(SV.xp>=xpNeed(SV.lvl)){SV.xp-=xpNeed(SV.lvl);SV.lvl++;up=true;}if(up){big('LEVEL '+SV.lvl);sfx('level');const u=SHOP.filter(s=>s.lvl===SV.lvl);toast('New rank: '+RANKS[Math.min(RANKS.length-1,SV.lvl-1)]+(u.length?' · Unlocked in shop: '+u.map(x=>x.name).join(', '):''));}paintTop();save();}
+function addBank(n){SV.bank+=n;paintTop();save();}
+const QPOOL=[{id:'dist1',t:'Run 500 m in a single run',goal:500,kind:'best'},{id:'dist2',t:'Run 1,200 m in a single run',goal:1200,kind:'best'},{id:'coins',t:'Collect 80 coins',goal:80,kind:'sum',k:'coins'},{id:'coins2',t:'Collect 200 coins',goal:200,kind:'sum',k:'coins'},
+ {id:'jumps',t:'Jump 30 times',goal:30,kind:'sum',k:'jumps'},{id:'slides',t:'Slide 20 times',goal:20,kind:'sum',k:'slides'},{id:'runs',t:'Play 5 runs',goal:5,kind:'sum',k:'runs'},{id:'total',t:'Run 3,000 m in total',goal:3000,kind:'sum',k:'dist'},{id:'imp1',t:'Win an Impostor round',goal:1,kind:'sum',k:'impwins'},{id:'imptask',t:'Finish 6 Impostor tasks',goal:6,kind:'sum',k:'tasks'},{id:'board2',t:'Win 2 board games in class',goal:2,kind:'sum',k:'boardwins'},{id:'lesson1',t:'Sit through a full lesson',goal:1,kind:'sum',k:'lessons'},{id:'match1',t:'Play a full inter-house match',goal:1,kind:'sum',k:'matches'},{id:'goals3',t:'Score 3 goals in matches',goal:3,kind:'sum',k:'mgoals'}];
+function dailySetup(){const d=today();if(SV.lastDay!==d){const y=new Date(Date.now()-864e5).toISOString().slice(0,10);SV.streak=SV.lastDay===y?SV.streak+1:1;SV.lastDay=d;const gift=20+Math.min(6,SV.streak)*10;SV.bank+=gift;setTimeout(()=>toast(`Day ${SV.streak} streak! Daily allowance +₦${gift}`),900);}
+ if(SV.qDay!==d){let s=[...d].reduce((a,c)=>a*31+c.charCodeAt(0),7)>>>0;const pool=[...QPOOL];SV.quests=[];while(SV.quests.length<3){s=(s*1103515245+12345)>>>0;const q=pool.splice(s%pool.length,1)[0];SV.quests.push({id:q.id,p:0,done:false});}SV.qDay=d;}save();}
+function questProgress(r){let msgs=[];SV.quests.forEach(q=>{if(q.done)return;const Q=QPOOL.find(x=>x.id===q.id);q.p=Q.kind==='best'?Math.max(q.p,r.dist):q.p+(r[Q.k]||0);if(q.p>=Q.goal){q.done=true;q.p=Q.goal;msgs.push(Q.t);addBank(40);addXP(50);}});save();return msgs;}
+const SHOP=[{id:'red',slot:'shirt',name:'Red House tee',price:120,lvl:1,v:'#c0563f'},{id:'blue',slot:'shirt',name:'Blue House tee',price:120,lvl:1,v:'#4f6e8a'},{id:'green',slot:'shirt',name:'Green House tee',price:150,lvl:2,v:'#55745c'},{id:'yellow',slot:'shirt',name:'Yellow House tee',price:150,lvl:3,v:'#e3a347'},
+ {id:'cap',slot:'hair',name:'Snapback cap',price:220,lvl:2,v:'cap'},{id:'afro',slot:'hair',name:'Big afro',price:180,lvl:3,v:'afro'},{id:'braids',slot:'hair',name:'Braids',price:180,lvl:3,v:'braids'},{id:'specs',slot:'extra',name:'Reading specs',price:140,lvl:2,v:'glasses'},{id:'prefect',slot:'shirt',name:'Prefect vest',price:400,lvl:6,v:'vest'}];
+function myLook(){const L=playerLook(SV.gender);const sh=SHOP.find(s=>s.id===SV.wear.shirt),hr=SHOP.find(s=>s.id===SV.wear.hair),ex=SHOP.find(s=>s.id===SV.wear.extra);
+ if(sh){if(sh.v==='vest')L.vest=1;else{L.shirt=sh.v;L.casual=1;}}if(hr){L.hair=hr.v;if(hr.v==='cap')L.capC='#3a2a30';}if(ex)L.glasses=1;return L;}
+// ---------- UI helpers ----------
+function toast(m){const d=document.createElement('div');d.textContent=m;$('toasts').appendChild(d);setTimeout(()=>d.remove(),3400);while($('toasts').children.length>3)$('toasts').firstChild.remove();}
+function big(t){const b=$('big');b.textContent=t;b.classList.remove('show');void b.offsetWidth;b.classList.add('show');}
+let sheetOpen=false;function openSheet(html,bind){$('sheetBox').innerHTML=html;$('sheet').classList.remove('hide');sheetOpen=true;bind&&bind($('sheetBox'));}
+function closeSheet(){$('sheet').classList.add('hide');sheetOpen=false;}
+$('sheet').addEventListener('pointerdown',e=>{if(e.target.id==='sheet'&&(mode==='hub'||mode==='int'))closeSheet();});
+function paintTop(){$('lvl').textContent=SV.lvl;$('rank').textContent=RANKS[Math.min(RANKS.length-1,SV.lvl-1)].replace('Boy/Girl',SV.gender==='girl'?'Girl':'Boy');$('xp').style.width=(SV.xp/xpNeed(SV.lvl)*100)+'%';$('bank').textContent=SV.bank;$('streak').textContent=SV.streak;$('face').src='assets/'+SV.gender+'-face.png';paintDock();}
+// ---------- audio ----------
+let AC=null;function sfx(k){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);const t=AC.currentTime;
+ const P={coin:[880,1320,0.08,'square',0.05],jump:[300,600,0.12,'triangle',0.08],slide:[400,180,0.15,'sawtooth',0.04],swish:[500,300,0.06,'triangle',0.04],crash:[180,50,0.4,'sawtooth',0.1],thud:[160,90,0.2,'square',0.07],power:[520,1040,0.25,'triangle',0.08],level:[523,1046,0.5,'triangle',0.1],splash:[300,120,0.18,'triangle',0.05]}[k]||[440,440,0.1,'sine',0.05];
+ o.type=P[3];o.frequency.setValueAtTime(P[0],t);o.frequency.exponentialRampToValueAtTime(P[1],t+P[2]);g.gain.setValueAtTime(P[4],t);g.gain.exponentialRampToValueAtTime(0.0001,t+P[2]+0.05);o.start(t);o.stop(t+P[2]+0.06);}catch(e){}}
+// ---------- world ----------
+const world=buildWorld(W);
+let player=null;const you=label('YOU','#a8553f');you.position.y=2.3;
+function buildPlayer(){const old=player;player=makePerson(myLook());player.add(you);world.scene.add(player);if(old){player.position.copy(old.position);player.rotation.copy(old.rotation);world.scene.remove(old);P.o=player;}}
+buildPlayer();world.setPlayer&&world.setPlayer(()=>player);
+const P=new Walker(player,0,22,4.4);
+const marker=new THREE.Mesh(new THREE.RingGeometry(0.35,0.5,28),new THREE.MeshBasicMaterial({color:'#fff3c4',transparent:true,opacity:0}));marker.rotation.x=-Math.PI/2;marker.position.y=0.12;world.scene.add(marker);
+// ---------- activities ----------
+const ACTS=[{id:'run',name:'Run',sub:'Late for Assembly',g:'▶',ready:true,big:true,where:'gate'},
+ {id:'impostor',name:'Impostor',sub:'Who stole the chalk?',g:'?',ready:true,where:'classroom'},
+ {id:'board',name:'Board games',sub:'Whot · Ludo · Ayo',g:'◆',ready:true,where:'classroom'},
+ {id:'class',name:'Sit in class',sub:'Optional',g:'✎',ready:true,where:'classroom'},
+ {id:'field',name:'Football',sub:'Match · penalties · more',g:'●',ready:true,big:true,where:'field'},
+ {id:'walk',name:'Walk',sub:'First person',g:'◉',ready:true},{id:'life',name:'School life',sub:'Election · prom',g:'★',ready:true},{id:'trip',name:'Excursion',sub:'Class trips',g:'✈',ready:true},{id:'ward',name:'Wardrobe',sub:'Outfits & shop',g:'♦',ready:true},{id:'bag',name:'Bag',sub:'Trade items',g:'▣',ready:true},{id:'friends',name:'Friends',sub:'Classmates',g:'♥',ready:true},{id:'quests',name:'Quests',sub:'Daily',g:'!',ready:true},{id:'shop',name:'Shop',sub:'Outfits',g:'₦',ready:true}];
+function paintDock(){const left=SV.quests?SV.quests.filter(q=>!q.done).length:0;$('dock').innerHTML=ACTS.map(a=>`<button class="act ${a.big?'big':''} ${a.ready?'':'lock'}" data-a="${a.id}"><span class="glyph">${a.g}</span><b>${a.name}</b><small>${a.ready?a.sub:'Stage '+a.stage}</small>${a.id==='quests'&&left?`<span class="dot">${left}</span>`:''}</button>`).join('');}
+$('dock').onclick=e=>{const b=e.target.closest('.act');if(!b)return;launch(b.dataset.a);};
+function launch(id){const a=ACTS.find(x=>x.id===id);if(id==='friends')return showFriends();if(id==='walk')return startPov();if(id==='life')return showEvents();if(id==='trip')return showTrips();if(id==='ward')return showWardrobe();if(id==='bag')return showBag();
+ if(id==='run')return startRun();if(id==='impostor')return impMenu();if(id==='board')return boardMenu();if(id==='field')return fieldMenu();if(id==='class')return startClass('lesson');if(id==='quests')return showQuests();if(id==='shop')return showShop();
+ openSheet(`<div class="hand" style="font-size:32px;line-height:1;">${a.name}</div><div style="font-size:14px;line-height:1.5;">${{impostor:'Among-Us style: one classmate secretly stole the chalk box. Do tasks around the school, call meetings in the classroom, and vote the impostor out before the bell. Sometimes YOU are the impostor.',board:'Play Whot, Ludo and Ayo under the desk during lessons. The teacher looks around — hide the cards in time.',class:'Sit through a real lesson for knowledge and better exam grades. Totally optional — skip whenever.',field:'Penalty shootout, keepy-uppy and sprints on the pitch.'}[id]}</div><span class="tag" style="align-self:flex-start;">Coming in Stage ${a.stage}</span><button class="btn pri" id="ok">Okay</button>`,b=>b.querySelector('#ok').onclick=closeSheet);}
+function showQuests(){const rows=SV.quests.map(q=>{const Q=QPOOL.find(x=>x.id===q.id);return `<div class="opt" style="cursor:default;"><span class="glyph" style="background:${q.done?'#55745c':'#fff'};color:${q.done?'#fff':'inherit'}">${q.done?'✓':'!'}</span><div style="flex:1;"><b>${Q.t}</b><small>${Math.floor(q.p)} / ${Q.goal} · Reward ₦40 + 50 XP</small><div class="qbar"><div style="width:${q.p/Q.goal*100}%"></div></div></div></div>`;}).join('');
+ openSheet(`<div class="hand" style="font-size:32px;line-height:1;">Today's quests</div><div style="font-size:13px;">New quests every day. Keep your streak going for a bigger daily allowance.</div>${rows}<button class="btn pri" id="ok">Let's go</button>`,b=>b.querySelector('#ok').onclick=closeSheet);}
+function showShop(){const it=SHOP.map(s=>{const own=SV.owned.includes(s.id),worn=SV.wear[s.slot]===s.id,lock=SV.lvl<s.lvl;
+  const sw=s.slot==='shirt'?`<span class="glyph" style="background:${s.v==='vest'?'#1e2a44':s.v}"></span>`:`<span class="glyph">${s.slot==='hair'?'^':'oo'}</span>`;
+  return `<button class="opt ${lock?'lock':''}" data-s="${s.id}">${sw}<div style="flex:1;"><b>${s.name}</b><small>${lock?'Unlocks at level '+s.lvl:own?(worn?'Wearing':'Owned — tap to wear'):'₦'+s.price}</small></div>${worn?'<span class="tag">ON</span>':''}</button>`;}).join('');
+ openSheet(`<div class="row" style="justify-content:space-between;"><span class="hand" style="font-size:32px;line-height:1;">Mama Nkechi's Shop</span><span class="card chip"><span class="coin"></span>${SV.bank}</span></div>${it}<button class="btn" id="reset">Wear school uniform</button><button class="btn pri" id="ok">Done</button>`,b=>{
+  b.querySelector('#ok').onclick=closeSheet;b.querySelector('#reset').onclick=()=>{SV.wear={shirt:'base',hair:'base',extra:'none'};save();buildPlayer();showShop();};
+  b.querySelectorAll('[data-s]').forEach(el=>el.onclick=()=>{const s=SHOP.find(x=>x.id===el.dataset.s);if(SV.lvl<s.lvl)return;const own=SV.owned.includes(s.id);
+   if(!own){if(SV.bank<s.price){toast('Not enough coins. Go run!');return;}SV.bank-=s.price;SV.owned.push(s.id);sfx('power');toast('Bought '+s.name+'!');}
+   SV.wear[s.slot]=SV.wear[s.slot]===s.id?(s.slot==='extra'?'none':'base'):s.id;save();paintTop();buildPlayer();showShop();});});}
+// ---------- runner ----------
+let R=null,mode='title',runState=null;
+let raceOn=false;function startRace(){raceOn=true;closeSheet();if(!R)R=createRunner({sfx,toast,big,over:runOver});resize();R.reset(myLook(),{race:true,cpu:soOpts.cpu});fade(()=>{mode='run';['top','dock','prompt'].forEach(i=>$(i).classList.add('hide'));['runHud','rTap','rPause'].forEach(i=>$(i).classList.remove('hide'));$('rBest').textContent=SV.sprintBest?SV.sprintBest.toFixed(2)+'s':'—';$('rBestL').textContent='Best';runState='ready';});}
+function startRun(){raceOn=false;closeSheet();if(!R)R=createRunner({sfx,toast,big,over:runOver});resize();R.reset(myLook());$('rBestL').textContent='Best';fade(()=>{mode='run';['top','dock','prompt'].forEach(i=>$(i).classList.add('hide'));['runHud','rTap','rPause'].forEach(i=>$(i).classList.remove('hide'));$('rBest').textContent=SV.best+'m';runState='ready';});}
+function beginRun(){if(runState!=='ready')return;runState='on';$('rTap').classList.add('hide');R.start();}
+function runOver(r){if(r.race)return raceOver(r);runState='over';const newBest=r.dist>SV.best;if(newBest)SV.best=r.dist;SV.runs++;const xp=Math.round(r.dist/12+r.coins*1.5);addBank(r.coins);const qs=questProgress({...r,runs:1});addXP(xp);
+ const qHtml=SV.quests.map(q=>{const Q=QPOOL.find(x=>x.id===q.id);return `<div style="font-size:13px;">${q.done?'✓':'·'} ${Q.t} <b>${Math.floor(q.p)}/${Q.goal}</b><div class="qbar"><div style="width:${q.p/Q.goal*100}%"></div></div></div>`;}).join('');
+ openSheet(`<div class="hand" style="font-size:20px;color:#a8553f;">${r.why}</div><div class="hand" style="font-size:40px;line-height:.9;">${newBest?'NEW BEST!':'Run over'}</div>
+  <div class="stat3"><div><b>${r.dist}m</b><small>DISTANCE</small></div><div><b>+${r.coins}</b><small>COINS</small></div><div><b>+${xp}</b><small>XP</small></div></div>
+  ${qs.length?`<div class="card" style="padding:8px 12px;background:#fff3c4;font-weight:700;font-size:14px;">Quest complete! ${qs.join(', ')} · +₦40</div>`:''}
+  <div style="display:flex;flex-direction:column;gap:6px;">${qHtml}</div>
+  <div class="row" style="flex-wrap:wrap;">${r.canRevive&&SV.bank>=30?'<button class="btn go" id="rv">Revive (₦30)</button>':''}<button class="btn pri" id="again" style="flex:1;">Run again (Space)</button><button class="btn" id="home">Campus</button></div>`,b=>{
+  if(b.querySelector('#rv'))b.querySelector('#rv').onclick=()=>{SV.bank-=30;save();closeSheet();runState='on';R.revive();};
+  b.querySelector('#again').onclick=()=>{closeSheet();R.reset(myLook());runState='ready';$('rTap').classList.remove('hide');$('rBest').textContent=SV.best+'m';};
+  b.querySelector('#home').onclick=()=>{closeSheet();toHub();};});save();}
+function raceOver(r){runState='over';const nb=!SV.sprintBest||r.time<SV.sprintBest;if(nb)SV.sprintBest=r.time;const coins=[0,40,25,15,5][r.place]+r.coins,xp=[0,60,40,25,15][r.place];addBank(coins);addXP(xp);
+ const opp=r.res.find(x=>x.n!=='You'&&x.t<r.time);if(r.place===1){['Tunde','Funmi','Chidi'].forEach(n=>bond(n,2,'Raced you in the 100 m'));feedPost('You',`Won the 100 m dash in ${r.time.toFixed(2)}s!`);}else if(opp)feedPost(opp.n,`Beat you in the 100 m dash. ${['Too fast, too furious.','Train harder!','Rematch tomorrow?'][Math.floor(Math.random()*3)]}`);
+ openSheet(`<div class="hand" style="font-size:20px;color:#a8553f;">100 m dash${nb?' · new best!':''}</div><div class="hand" style="font-size:44px;line-height:.9;">${['','YOU WON!','2nd place','3rd place','4th place'][r.place]}</div>
+  <div style="display:flex;flex-direction:column;gap:4px;">${r.res.map((x,k)=>`<div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;padding:4px 8px;border-radius:8px;background:${x.n==='You'?'#fff3c4':'transparent'};"><span>${k+1}. ${x.n}</span><span>${x.t.toFixed(2)}s</span></div>`).join('')}</div>
+  <div class="stat3"><div><b>+${coins}</b><small>COINS</small></div><div><b>+${xp}</b><small>XP</small></div><div><b>${SV.sprintBest.toFixed(2)}s</b><small>BEST</small></div></div>
+  <div class="row" style="flex-wrap:wrap;"><button class="btn pri" id="again" style="flex:1;">Race again (Space)</button><button class="btn" id="home">Campus</button></div>`,b=>{
+  b.querySelector('#again').onclick=()=>{closeSheet();R.reset(myLook(),{race:true,cpu:soOpts.cpu});runState='ready';$('rTap').classList.remove('hide');$('rBest').textContent=SV.sprintBest.toFixed(2)+'s';};b.querySelector('#home').onclick=()=>{closeSheet();toHub();};});save();}
+function toHub(){fade(()=>{mode='hub';runState=null;['runHud','rTap','rPause'].forEach(i=>$(i).classList.add('hide'));['top','dock'].forEach(i=>$(i).classList.remove('hide'));paintTop();});}
+let paused=false;$('rPause').onclick=()=>{paused=!paused;$('rPause').textContent=paused?'Resume':'Pause';};
+function fade(fn){$('fade').style.opacity=1;setTimeout(()=>{fn();$('fade').style.opacity=0;},320);}
+// ---------- input ----------
+addEventListener('keydown',e=>{if(mode==='soccer'||mode==='exc')return;const k=e.key.toLowerCase();
+ if(mode==='class'){if(k===' '||k==='h'){e.preventDefault();if(cls&&!cls.over&&!sheetOpen)setHidden(!cls.hidden);}return;}
+ if(mode==='run'){if(['arrowleft','a'].includes(k))R.input('left');if(['arrowright','d'].includes(k))R.input('right');if(['arrowup','w'].includes(k))R.input('up');if(['arrowdown','s'].includes(k))R.input('down');
+  if(k===' '){e.preventDefault();if(runState==='ready')beginRun();else if(runState==='over'&&sheetOpen){const a=$('again');a&&a.click();}else R.input('up');}if(runState==='ready'&&k.startsWith('arrow'))beginRun();return;}
+ if(mode==='hub'||mode==='imp'||mode==='int'){keys[k]=true;if(k==='e'&&!$('prompt').classList.contains('hide'))$('promptB').click();}});
+addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});const keys={};
+const ptrs=new Map();let pinch=null;const ray=new THREE.Raycaster(),v2=new THREE.Vector2();
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,t:performance.now(),rot:e.button===2||e.shiftKey});if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:iso.zoom,a:Math.atan2(b.y-a.y,b.x-a.x),yaw,mx:(a.x+b.x)/2,my:(a.y+b.y)/2};}});
+const panOff=new THREE.Vector3();function panBy(dx,dy){const k=(iso.top-iso.bottom)/iso.zoom/innerHeight;const rx=Math.cos(yaw),rz=-Math.sin(yaw),fx=-Math.sin(yaw),fz=-Math.cos(yaw);panOff.x+=(-rx*dx+fx*dy/Math.sin(PITCH))*k;panOff.z+=(-rz*dx+fz*dy/Math.sin(PITCH))*k;const l=Math.hypot(panOff.x,panOff.z);if(l>45)panOff.multiplyScalar(45/l);}
+canvas.addEventListener('pointermove',e=>{const p=ptrs.get(e.pointerId);if(!p)return;
+ if(mode==='pov'){povYaw-=(e.clientX-p.x)*0.006;povPitch=THREE.MathUtils.clamp(povPitch-(e.clientY-p.y)*0.004,-0.6,0.5);p.x=e.clientX;p.y=e.clientY;return;}
+ if(mode==='int'&&IN){const dx=e.clientX-p.x;p.x=e.clientX;p.y=e.clientY;if(Math.hypot(e.clientX-p.sx,e.clientY-p.sy)>6)IN.orbit(dx);return;}
+ if(mode==='hub'||mode==='imp'){if(ptrs.size===2&&pinch){p.x=e.clientX;p.y=e.clientY;const [a,b]=[...ptrs.values()];iso.zoom=THREE.MathUtils.clamp(pinch.z*Math.hypot(a.x-b.x,a.y-b.y)/pinch.d,0.55,2.4);iso.updateProjectionMatrix();yaw=pinch.yaw+(Math.atan2(b.y-a.y,b.x-a.x)-pinch.a);const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;panBy(mx-pinch.mx,my-pinch.my);pinch.mx=mx;pinch.my=my;return;}
+  const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;if(Math.hypot(e.clientX-p.sx,e.clientY-p.sy)>6){if(p.rot)yaw+=dx*0.006;else panBy(dx,dy);}}});
+const pup=e=>{const p=ptrs.get(e.pointerId);ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(!p)return;const dx=e.clientX-p.sx,dy=e.clientY-p.sy;
+ if(mode==='run'){if(runState==='ready'){beginRun();return;}if(Math.hypot(dx,dy)<20){R.input('up');return;}if(Math.abs(dx)>Math.abs(dy))R.input(dx<0?'left':'right');else R.input(dy<0?'up':'down');return;}
+ if((mode==='hub'||mode==='imp')&&ptrs.size===0&&Math.hypot(dx,dy)<=6)tap(e.clientX,e.clientY);
+ if(mode==='int'&&IN&&ptrs.size===0&&Math.hypot(dx,dy)<=6&&!sheetOpen)IN.tap(e.clientX,e.clientY,canvas.getBoundingClientRect());};
+canvas.addEventListener('pointerup',pup);canvas.addEventListener('pointercancel',pup);
+canvas.addEventListener('wheel',e=>{e.preventDefault();if(mode!=='hub'&&mode!=='imp')return;iso.zoom=THREE.MathUtils.clamp(iso.zoom*(e.deltaY>0?0.9:1.1),0.55,2.4);iso.updateProjectionMatrix();},{passive:false});
+let pending=null;
+function tap(cx,cy){if(sheetOpen)return;const r=canvas.getBoundingClientRect();v2.set((cx-r.left)/r.width*2-1,-(cy-r.top)/r.height*2+1);ray.setFromCamera(v2,iso);
+ const hit=ray.intersectObjects(world.clickables,false)[0];if(hit){const id=hit.object.userData.bid;const d=world.doorOf(id);pending=id;if(P.goTo(world.G,d[0],d[1]))showMarker(d[0],d[1]);return;}
+ const g=ray.intersectObject(world.ground)[0];if(!g)return;pending=null;const F=world.field;if(g.point.x>F.x0&&g.point.x<F.x1&&g.point.z>F.z0&&g.point.z<F.z1)pending='field';if(P.goTo(world.G,g.point.x,g.point.z))showMarker(g.point.x,g.point.z);}
+function showMarker(x,z){marker.position.set(x,0.12,z);marker.material.opacity=1;}
+const PLACES={classroom:{n:'SS1 Classroom',acts:['impostor','board','class']},canteen:{n:"Mama Titi's Canteen",snack:true},field:{n:'School Field',acts:['field']},gate:{n:'School Gate',acts:['run']},
+ library:{n:'Library',acts:['class']},lab:{n:'Science Lab',acts:['impostor']},admin:{n:'Admin Block',acts:[]},common:{n:'Common Room',acts:['board']}};
+function placeSheet(id){const pl=PLACES[id];const opts=(pl.acts||[]).map(a=>{const A=ACTS.find(x=>x.id===a);return `<button class="opt ${A.ready?'':'lock'}" data-a="${a}"><span class="glyph">${A.g}</span><div style="flex:1;"><b>${A.name}</b><small>${A.sub}</small></div>${A.ready?'<span class="tag">PLAY</span>':`<span class="tag">Stage ${A.stage}</span>`}</button>`;}).join('');
+ const snack=pl.snack?[['Puff-puff',10,'+12 energy'],['Zobo',15,'+18 energy'],['Meat pie',30,'+35 energy, +10 XP']].map(([n,p,s],k)=>`<button class="opt" data-snack="${k}"><span class="glyph">₦</span><div style="flex:1;"><b>${n} — ₦${p}</b><small>${s}</small></div></button>`).join('')+`<button class="opt" id="keepB"><span class="glyph">▣</span><div style="flex:1;"><b>Buy to keep</b><small>Snacks, stickers & more for your bag: trade them with classmates</small></div></button>`:'';
+ openSheet(`<div class="hand" style="font-size:32px;line-height:1;">${pl.n}</div>${opts}${snack}${!opts&&!snack?'<div style="font-size:14px;">The Principal is in a meeting. Nothing to do here yet.</div>':''}<button class="btn" id="ok">Back</button>`,b=>{b.querySelector('#ok').onclick=closeSheet;
+  b.querySelectorAll('[data-a]').forEach(el=>el.onclick=()=>{closeSheet();launch(el.dataset.a);});
+  {const kb=b.querySelector('#keepB');if(kb)kb.onclick=()=>keepShop();}b.querySelectorAll('[data-snack]').forEach(el=>el.onclick=()=>{const p=[10,15,30][el.dataset.snack];if(SV.bank<p){toast('Mama Titi: "Your money no reach!"');return;}addBank(-p);sfx('coin');if(p===30)addXP(10);toast(['Hot puff-puff. Sweet!','Cold zobo. Ahh.','Meat pie for the win.'][el.dataset.snack]);});});}
+// ---------- impostor ----------
+let IMP=null,impBonus=false;
+function impMenu(){openSheet(`<div class="hand" style="font-size:34px;line-height:1;">Who stole the chalk?</div><div style="font-size:14px;line-height:1.5;">7 classmates, 1 impostor secretly chalk-dusting people around the school. Do tasks, report what you find and vote them out. Or BE the impostor.</div>
+ <button class="opt" data-r="crew"><span class="glyph" style="background:#55745c;color:#fff">✓</span><div style="flex:1"><b>Play as Crew</b><small>Do 4 tasks, find the thief</small></div></button>
+ <button class="opt" data-r="imp"><span class="glyph" style="background:#a8553f;color:#fff">?</span><div style="flex:1"><b>Play as Impostor</b><small>Tag them when nobody's looking</small></div></button>
+ <button class="opt" data-r="rand"><span class="glyph">★</span><div style="flex:1"><b>Surprise me</b><small>1 in 4 chance you're the impostor · +20% coins</small></div></button><button class="btn" id="ok">Back</button>`,b=>{b.querySelector('#ok').onclick=()=>{closeSheet();if(mode==='imp')exitImp();};
+ b.querySelectorAll('[data-r]').forEach(el=>el.onclick=()=>{let r=el.dataset.r;const bonus=r==='rand';if(bonus)r=Math.random()<0.25?'imp':'crew';closeSheet();startImp(r,bonus);});});}
+function startImp(role,bonus){if(!IMP)IMP=createImpostor({world,getP:()=>({P,player}),toast,sfx,big,openSheet,closeSheet,isSheet:()=>sheetOpen,onEnd:impOver});
+ fade(()=>{mode='imp';impBonus=bonus;pending=null;['top','dock','prompt'].forEach(i=>$(i).classList.add('hide'));$('impHud').classList.remove('hide');world.setLife(false);iso.zoom=1.75;iso.updateProjectionMatrix();post.setVision(1,role==='imp'?0.6:0.45);IMP.start(role);});}
+function impOver(r){const coins=Math.round((r.win?60:15)*(impBonus?1.2:1)),xp=r.win?90:30;addBank(coins);addXP(xp);const qs=questProgress({dist:0,coins:0,jumps:0,slides:0,runs:0,impwins:r.win?1:0,tasks:r.tasks});
+ openSheet(`<div class="hand" style="font-size:20px;color:${r.win?'#55745c':'#a8553f'}">${r.role==='imp'?'You were the impostor':'You were crew'}</div><div class="hand" style="font-size:44px;line-height:.9;">${r.win?'VICTORY':'DEFEAT'}</div><div style="font-size:15px;line-height:1.5;">${r.msg}</div>${r.role!=='imp'?`<div class="row"><span class="glyph" style="background:${r.impCol}"></span><span style="font-weight:700;">Impostor: ${r.impName}</span></div>`:''}
+ <div class="stat3"><div><b>+${coins}</b><small>COINS</small></div><div><b>+${xp}</b><small>XP</small></div><div><b>${r.role==='imp'?r.kills:r.tasks}</b><small>${r.role==='imp'?'TAGS':'TASKS'}</small></div></div>${qs.length?`<div class="card" style="padding:8px 12px;background:#fff3c4;font-weight:700;font-size:14px;">Quest complete! ${qs.join(', ')}</div>`:''}
+ <div class="row"><button class="btn pri" id="again" style="flex:1;">Play again</button><button class="btn" id="home">Campus</button></div>`,b=>{b.querySelector('#again').onclick=()=>{closeSheet();impMenu();};b.querySelector('#home').onclick=()=>{closeSheet();exitImp();};});}
+function exitImp(){fade(()=>{IMP&&IMP.cleanup();world.setLife(true);post.setVision(0,0.5);pending=null;$('impHud').classList.add('hide');$('prompt').classList.add('hide');mode='hub';iso.zoom=1.25;iso.updateProjectionMatrix();['top','dock'].forEach(i=>$(i).classList.remove('hide'));paintTop();});}
+$('impHud').addEventListener('pointerdown',e=>{if(e.target.id==='impQuit'){closeSheet();exitImp();}});
+function moveStep(dt){const kf=(keys['w']||keys['arrowup']?1:0)-(keys['s']||keys['arrowdown']?1:0),kr=(keys['d']||keys['arrowright']?1:0)-(keys['a']||keys['arrowleft']?1:0);
+ if(sheetOpen||!IMP.canMove()){P.path=[];poseUpdate(player,dt,false);return;}
+ if(kf||kr){P.path=[];const fx=-Math.sin(yaw),fz=-Math.cos(yaw);let mx=fx*kf-fz*kr,mz=fz*kf+fx*kr;const l=Math.hypot(mx,mz);mx/=l;mz/=l;const sp=P.speed*0.8*dt,nx=P.x+mx*sp,nz=P.z+mz*sp;
+  if(world.free(nx,nz)){P.x=nx;P.z=nz;}else if(world.free(nx,P.z))P.x=nx;else if(world.free(P.x,nz))P.z=nz;P.face(mx,mz,dt);player.position.set(P.x,0,P.z);poseUpdate(player,dt,true);}
+ else{const mv=P.step(dt);poseUpdate(player,dt,mv);}}
+function impPrompt(){const pr=IMP.prompt();if(pr&&!sheetOpen){$('promptT').textContent=pr.text;$('promptB').textContent=pr.btn+' (E)';$('promptB').onclick=pr.on;$('prompt').classList.remove('hide');}else $('prompt').classList.add('hide');}
+// ---------- football ----------
+let SO=null,soOpts={min:10,cpu:0.5},soKind='match';
+const HOUSES=[['Red','#c0563f'],['Blue','#4f6e8a'],['Green','#55745c'],['Yellow','#d9a43a']],FIX=['Blue','Green','Yellow','Blue','Green','Yellow'];
+function league(){if(!SV.league){SV.league={season:1,round:0,t:Object.fromEntries(HOUSES.map(([n])=>[n,[0,0,0,0,0,0]]))};}return SV.league;}
+function lgRes(t,a,b,ga,gb){const A=t[a],B=t[b];A[0]++;B[0]++;A[4]+=ga;A[5]+=gb;B[4]+=gb;B[5]+=ga;if(ga>gb){A[1]++;B[3]++;}else if(ga<gb){B[1]++;A[3]++;}else{A[2]++;B[2]++;}}
+const lgPts=r=>r[1]*3+r[2];
+function lgSorted(t){return Object.entries(t).sort((a,b)=>lgPts(b[1])-lgPts(a[1])||(b[1][4]-b[1][5])-(a[1][4]-a[1][5])||b[1][4]-a[1][4]);}
+function leagueAdd(sc){const Lg=league(),opp=FIX[Lg.round%6];lgRes(Lg.t,'Red',opp,sc[0],sc[1]);const rest=HOUSES.map(x=>x[0]).filter(n=>n!=='Red'&&n!==opp);const g=()=>[0,0,1,1,1,2,2,3][Math.floor(Math.random()*8)];lgRes(Lg.t,rest[0],rest[1],g(),g());Lg.round++;
+ if(Lg.round>=6){const ch=lgSorted(Lg.t)[0][0];setTimeout(()=>{big(ch==='Red'?'CHAMPIONS!':ch+' House win');feedPost('School',`Season ${Lg.season} of the Inter-house League is over: ${ch} House are champions!`);if(ch==='Red'){addBank(150);addXP(200);toast('Red House champions: +₦150, +200 XP');}},1800);Lg.season++;Lg.round=0;Lg.t=Object.fromEntries(HOUSES.map(([n])=>[n,[0,0,0,0,0,0]]));}save();}
+function leagueHTML(){const Lg=league(),opp=FIX[Lg.round%6];return `<div class="card" style="padding:8px 10px;"><div class="row" style="justify-content:space-between;flex-wrap:wrap;"><b style="font-size:14px;">Inter-house League · Season ${Lg.season}</b><small>Match ${Lg.round+1} of 6 · next: vs ${opp} House</small></div><div style="display:grid;grid-template-columns:1fr repeat(6,30px);gap:2px 4px;font-size:12px;margin-top:4px;"><b>House</b><b>P</b><b>W</b><b>D</b><b>L</b><b>GD</b><b>Pts</b>${lgSorted(Lg.t).map(([n,r])=>`<span style="font-weight:700;color:${HOUSES.find(x=>x[0]===n)[1]};">● ${n}</span><span>${r[0]}</span><span>${r[1]}</span><span>${r[2]}</span><span>${r[3]}</span><span>${r[4]-r[5]}</span><b>${lgPts(r)}</b>`).join('')}</div></div>`;}
+function fieldMenu(){const chip=(g,v,l,on)=>`<button class="btn ${on?'pri':''}" data-${g}="${v}" style="font-size:16px;padding:3px 12px;">${l}</button>`;
+ openSheet(`<div class="hand" style="font-size:34px;line-height:1;">School field</div>
+ <button class="opt" data-k="match"><span class="glyph" style="background:#c0563f;color:#fff">●</span><div style="flex:1"><b>Inter-house final</b><small>Red House vs Blue House · 11-a-side · full match</small></div><span class="tag">PLAY</span></button>
+ <div class="row" style="flex-wrap:wrap;gap:6px;"><span style="font-size:12px;font-weight:700;width:70px;">LENGTH</span>${[5,10,20].map(m=>chip('m',m,m+' min',soOpts.min===m)).join('')}</div>
+ <div class="row" style="flex-wrap:wrap;gap:6px;"><span style="font-size:12px;font-weight:700;width:70px;">BLUE AI</span>${[['0.2','Easy'],['0.5','Normal'],['0.85','Hard']].map(([v,l])=>chip('c',v,l,String(soOpts.cpu)===v)).join('')}</div>
+${leagueHTML()}
+ <button class="opt" data-k="pens"><span class="glyph">◎</span><div style="flex:1"><b>Penalty shootout</b><small>5 each, then sudden death. Shoot and save.</small></div></button>
+ <button class="opt" data-k="keepy"><span class="glyph">↑</span><div style="flex:1"><b>Keepy-uppy</b><small>Best: ${localStorage.getItem('bts3_keepy')||0} touches</small></div></button>
+ <button class="opt" data-k="sprint"><span class="glyph">»</span><div style="flex:1"><b>100 m dash</b><small>Run-game style: race Tunde, Funmi and Chidi side by side. Dodge, jump, slide.</small></div></button><button class="btn" id="ok">Back</button>`,b=>{
+  b.querySelector('#ok').onclick=()=>{closeSheet();if(mode==='soccer')exitSoccer();};
+  b.querySelectorAll('[data-m]').forEach(e=>e.onclick=()=>{soOpts.min=+e.dataset.m;fieldMenu();});b.querySelectorAll('[data-c]').forEach(e=>e.onclick=()=>{soOpts.cpu=+e.dataset.c;fieldMenu();});
+  b.querySelectorAll('[data-k]').forEach(e=>e.onclick=()=>{closeSheet();if(e.dataset.k==='sprint'){if(mode==='soccer'){SO.stop();}return startRace();}startSoccer(e.dataset.k);});});}
+function startSoccer(kind){soKind=kind;if(!SO)SO=createSoccer({sfx,big,toast,openSheet,closeSheet,look:myLook,onEnd:soccerOver});
+ fade(()=>{mode='soccer';pending=null;['top','dock','prompt','impHud','clsHud','desk'].forEach(i=>$(i).classList.add('hide'));resize();SO.start(kind,soOpts);});}
+function soccerOver(r){if(r.kind==='match'&&!r.quit)leagueAdd(r.score);let coins=0,xp=0,q={dist:0,coins:0,jumps:0,slides:0,runs:0};
+ if(r.kind==='match'&&!r.quit){coins=(r.win?120:r.draw?60:30)+r.goals*10;xp=r.win?150:r.draw?90:50;q.matches=1;q.mgoals=r.goals;}
+ if(r.kind==='pens'){coins=r.win?50:15;xp=r.win?60:20;}if(r.kind==='keepy'){coins=Math.min(80,r.touches);xp=r.touches*2;}if(r.kind==='sprint'){coins=[0,40,25,15,5][r.place];xp=[0,60,40,25,15][r.place];}
+ if(coins)addBank(coins);if(xp)addXP(xp);const qs=questProgress(q);
+ openSheet(`<div class="hand" style="font-size:20px;color:#a8553f;">${r.sub}</div><div class="hand" style="font-size:44px;line-height:.9;">${r.title}</div>${r.html||''}<div class="stat3"><div><b>+${coins}</b><small>COINS</small></div><div><b>+${xp}</b><small>XP</small></div><div><b>${r.kind==='match'?r.score.join('–'):r.kind==='keepy'?r.touches:r.kind==='sprint'?['','1st','2nd','3rd','4th'][r.place]:r.win?'W':'L'}</b><small>RESULT</small></div></div>${qs.length?`<div class="card" style="padding:8px 12px;background:#fff3c4;font-weight:700;font-size:14px;">Quest complete! ${qs.join(', ')}</div>`:''}
+ <div class="row" style="flex-wrap:wrap;"><button class="btn pri" id="again" style="flex:1;">Play again</button><button class="btn" id="menu">Field menu</button><button class="btn" id="home">Campus</button></div>`,b=>{
+  b.querySelector('#again').onclick=()=>{closeSheet();startSoccer(soKind);};b.querySelector('#menu').onclick=()=>{closeSheet();SO.stop();fieldMenu();};b.querySelector('#home').onclick=()=>{closeSheet();exitSoccer();};});}
+function exitSoccer(){fade(()=>{SO&&SO.stop();mode='hub';['top','dock'].forEach(i=>$(i).classList.remove('hide'));paintTop();});}
+// ---------- classroom ----------
+let CL=null,cls=null;
+const GAMES={whot:['Whot','vs Chidi · match shape or number','Chidi'],ludo:['Ludo','vs Tunde · race 2 seeds home','Tunde'],ayo:['Ayo','vs Amaka · sow seeds, capture 2s and 3s','Amaka'],
+ monopoly:['School-opoly','vs Emeka · buy, build, trade, bankrupt him','Emeka','break'],wyr:['Would You Rather?','with the gang · pick a side, see who agrees','*','break'],phone:['Broken Telephone','with the gang · save the message','*','break']};
+const isBreak=k=>GAMES[k]&&GAMES[k][3]==='break';
+// ---------- friendships (persistent, data-driven) ----------
+const PEOPLE={Chidi:{p:'Class clown',col:'#c0563f',game:'whot',hi:'Who wants to hear a joke? No? Okay, Whot then.'},Tunde:{p:'Competitive athlete',col:'#55745c',game:'ludo',hi:'I don\u2019t lose. Ludo, football, anything.'},Amaka:{p:'Strategic thinker',col:'#4f6e8a',game:'ayo',hi:'Ayo is just maths with seeds. Want to try?'},Zainab:{p:'Dramatic storyteller',col:'#c97a8a',game:'phone',hi:'Have you heard what happened at assembly?! Also: Ten-Ten?'},Emeka:{p:'Snack trader',col:'#6b4a7a',game:'monopoly',hi:'Puff-puff for your meat pie? Fair trade.'},Funmi:{p:'Musician',col:'#e3a347',game:'wyr',hi:'Every clap is a beat. Keep up!'},Bayo:{p:'Quiet observer',col:'#d07a3a',game:'phone',hi:'\u2026 I notice things.'},Halima:{p:'Prefect',col:'#3f8a8a',game:'phone',hi:'Rules are rules. But games at break are allowed.'}};
+const TIERS=[[0,'Acquaintance'],[10,'Classmate'],[25,'Friend'],[50,'Close Friend'],[80,'Best Friend']];
+const tierOf=f=>TIERS.filter(t=>f>=t[0]).pop();
+function rel(n){SV.rel=SV.rel||{};return SV.rel[n]||(SV.rel[n]={f:0,w:0,l:0,mem:[],gift:0});}
+function bond(n,df,memo){if(!PEOPLE[n])return;const r=rel(n),before=tierOf(r.f)[1];r.f=Math.max(0,Math.min(100,r.f+df));if(memo){r.mem.unshift(memo);r.mem=r.mem.slice(0,4);}const after=tierOf(r.f)[1];
+ if(after!==before&&df>0){toast(`${n} is now your ${after}!`);if(after==='Close Friend'&&!r.gift){r.gift=1;addBank(25);toast(`${n} gave you ₦25 to celebrate.`);}}save();}
+function talkLine(n){const r=rel(n),G=GAMES[PEOPLE[n].game];if(r.l>r.w&&r.l>0)return `“You still owe me a rematch in ${G[0]}.”`;if(r.w>r.l)return `“You’ve beaten me ${r.w} time${r.w>1?'s':''}. Not again!”`;if(r.f>=50)return `“Save me a seat at break, abeg.”`;if(r.f>=25)return `“Same time tomorrow?”`;return `“${PEOPLE[n].hi}”`;}
+function showFriends(){const rows=Object.keys(PEOPLE).map(n=>{const r=rel(n),[th,tn]=tierOf(r.f),nx=TIERS.find(t=>t[0]>r.f),pct=nx?Math.round((r.f-th)/(nx[0]-th)*100):100;const G=GAMES[PEOPLE[n].game];
+  return `<div class="opt" style="cursor:default;align-items:flex-start;"><span class="glyph" style="background:${PEOPLE[n].col};color:#fff;">${n[0]}</span><div style="flex:1;min-width:0;"><div class="row" style="justify-content:space-between;gap:6px;"><b>${n}</b><span class="tag">${tn}</span></div><small>${PEOPLE[n].p}</small>
+   <div class="qbar"><div style="width:${pct}%;background:${PEOPLE[n].col}"></div></div><div style="font-size:13px;margin-top:4px;">${talkLine(n)}</div>${r.mem[0]?`<div style="font-size:11px;opacity:.7;margin-top:2px;">Remembers: ${r.mem[0]}</div>`:''}</div><button class="btn" data-inv="${PEOPLE[n].game}" style="font-size:15px;padding:3px 10px;align-self:center;">${G[0]}</button></div>`;}).join('');
+ openSheet(`<div class="hand" style="font-size:32px;line-height:1;">Classmates</div><div style="font-size:13px;">Play, talk and hang out to grow friendships. They remember.</div>${rows}<button class="btn" id="ok">Close</button>`,b=>{b.querySelector('#ok').onclick=closeSheet;b.querySelectorAll('[data-inv]').forEach(x=>x.onclick=()=>{closeSheet();startClass(x.dataset.inv);});});}
+let invT=45+Math.random()*40;function inviteTick(dt){if(sheetOpen||!$('invite').classList.contains('hide'))return;invT-=dt;if(invT>0)return;invT=80+Math.random()*60;const names=Object.keys(PEOPLE);const n=names[Math.floor(Math.random()*names.length)],g=PEOPLE[n].game;
+ const r=rel(n);const line=r.l>r.w&&r.l>0?`Rematch in ${GAMES[g][0]}? I’m ready this time.`:`Break time! ${GAMES[g][0]}?`;$('invite').innerHTML=`<span class="glyph" style="background:${PEOPLE[n].col};color:#fff;">${n[0]}</span><div style="flex:1;font-size:14px;"><b>${n}:</b> ${line}</div><button class="btn pri" id="invY" style="font-size:16px;padding:3px 12px;">Join</button><button class="btn" id="invN" style="font-size:16px;padding:3px 10px;">Not now</button>`;
+ $('invite').classList.remove('hide');const close=()=>$('invite').classList.add('hide');$('invY').onclick=()=>{close();startClass(g);};$('invN').onclick=()=>{close();};setTimeout(close,14000);}
+function boardMenu(){openSheet(`<div class="hand" style="font-size:34px;line-height:1;">Board games in class</div><div style="font-size:14px;line-height:1.5;">Play under the desk while Mr. Adeyemi teaches. When he turns around or walks the rows, <b>hide it</b> (Space). Get caught and it's confiscated.</div>
+ ${Object.entries(GAMES).map(([k,[n,s]])=>`<button class="opt" data-g="${k}"><span class="glyph">${n[0]}</span><div style="flex:1"><b>${n}</b><small>${s}</small></div><span class="tag">${isBreak(k)?'BREAK':'UNDER DESK'}</span></button>`).join('')}<button class="btn" id="ok">Back</button>`,b=>{b.querySelector('#ok').onclick=()=>{closeSheet();if(mode==='class')exitClass();};b.querySelectorAll('[data-g]').forEach(el=>el.onclick=()=>{closeSheet();startClass(el.dataset.g);});});}
+function startClass(kind){if(!CL)CL=createClassroom();const go=()=>{mode='class';pending=null;['top','dock','prompt'].forEach(i=>$(i).classList.add('hide'));['clsHud','desk'].forEach(i=>$(i).classList.remove('hide'));
+  const les=kind==='lesson',brk=isBreak(kind);$('susBox').classList.toggle('hide',les||brk);$('hideB').classList.toggle('hide',les||brk);$('desk').classList.remove('down');
+  CL.start(myLook(),les||brk,brk);resize();if(cls&&cls.api)cls.api.dead=true;cls={kind,hidden:false,sus:0,maxSus:0,over:false};
+  const opp=GAMES[kind]&&GAMES[kind][2],gname=GAMES[kind]&&GAMES[kind][0];
+  const api={dead:false,paused:()=>!cls||cls.hidden||cls.over||sheetOpen,sfx,beat:(k,ls,n)=>CL.lessonBeat(k,ls,n),bond:(n,d,m)=>bond(n,d,m),people:PEOPLE,
+   win:(m,o)=>{if(opp&&opp!=='*'){rel(opp).w++;bond(opp,4,`You beat ${opp} at ${gname}`);}clsEnd(true,m,o);},lose:(m,o)=>{if(opp&&opp!=='*'){rel(opp).l++;bond(opp,5,`${opp} beat you at ${gname}`);}clsEnd(false,m,o);},done:s=>lessonEnd(s)};cls.api=api;
+  $('deskT').textContent=les?'Lesson notes':GAMES[kind][0]+' · '+GAMES[kind][1].split(' · ')[0];$('deskBody').innerHTML='';DG[kind]($('deskBody'),api);};
+ mode==='class'?go():fade(go);}
+function setHidden(v){if(!cls||cls.kind==='lesson'||isBreak(cls.kind))return;cls.hidden=v;$('desk').classList.toggle('down',v);$('hideB').textContent=v?'Take it out (Space)':'Hide (Space)';sfx('swish');}
+$('hideB').onclick=()=>{if(cls&&!cls.over)setHidden(!cls.hidden);};
+$('desk').addEventListener('pointerdown',e=>{if(cls&&cls.hidden&&e.target.id!=='hideB')setHidden(false);});
+$('clsLeave').onclick=()=>{closeSheet();exitClass();};
+function caught(){cls.over=true;cls.api.dead=true;CL.scold();sfx('crash');setHidden(false);addXP(10);
+ setTimeout(()=>openSheet(`<div class="hand" style="font-size:20px;color:#a8553f;">"Bring it here!"</div><div class="hand" style="font-size:44px;line-height:.9;">CONFISCATED</div><div style="font-size:15px;line-height:1.5;">Mr. Adeyemi seized your ${GAMES[cls.kind][0]} game. Hide it the moment he turns around or walks your row.</div><div class="stat3"><div><b>+0</b><small>COINS</small></div><div><b>+10</b><small>XP</small></div><div><b>1</b><small>DETENTION</small></div></div>${clsBtns()}`,bindCls),1800);}
+function clsBtns(){return `<div class="row" style="flex-wrap:wrap;"><button class="btn pri" id="again" style="flex:1;">Play again</button><button class="btn" id="other">Other game</button><button class="btn" id="home">Campus</button></div>`;}
+function bindCls(b){const k=cls.kind;b.querySelector('#again').onclick=()=>{closeSheet();startClass(k);};b.querySelector('#other').onclick=()=>{closeSheet();boardMenu();};b.querySelector('#home').onclick=()=>{closeSheet();exitClass();};}
+function clsEnd(win,m,o){if(cls.over)return;cls.over=true;const ghost=win&&cls.maxSus<50&&!isBreak(cls.kind);const coins=o&&o.coins!=null?o.coins:(win?40+(ghost?15:0):10),xp=o&&o.xp!=null?o.xp:(win?60:20);addBank(coins);addXP(xp);const qs=questProgress({dist:0,coins:0,jumps:0,slides:0,runs:0,boardwins:win?1:0});
+ openSheet(`<div class="hand" style="font-size:20px;color:${win?'#55745c':'#a8553f'}">${m}</div><div class="hand" style="font-size:44px;line-height:.9;">${win?'YOU WIN':'YOU LOST'}</div>${ghost?'<div class="card" style="padding:6px 12px;background:#dfe8d8;font-weight:700;font-size:14px;">Ghost bonus: the teacher never suspected a thing. +15</div>':''}<div class="stat3"><div><b>+${coins}</b><small>COINS</small></div><div><b>+${xp}</b><small>XP</small></div><div><b>${Math.round(cls.maxSus)}%</b><small>MAX SUSPICION</small></div></div>${qs.length?`<div class="card" style="padding:8px 12px;background:#fff3c4;font-weight:700;font-size:14px;">Quest complete! ${qs.join(', ')}</div>`:''}${clsBtns()}`,bindCls);}
+function lessonEnd(s){if(cls.over)return;cls.over=true;const xp=20+s*20,coins=s*8;addBank(coins);addXP(xp);SV.know=(SV.know||0)+s;save();const qs=questProgress({dist:0,coins:0,jumps:0,slides:0,runs:0,lessons:1});
+ openSheet(`<div class="hand" style="font-size:20px;color:#55745c;">Lesson over</div><div class="hand" style="font-size:44px;line-height:.9;">${s}/4 correct</div><div style="font-size:14px;">${s>=3?'"Excellent. Keep it up."':s>=2?'"Not bad. Read your notes tonight."':'"See me after class."'}</div><div class="stat3"><div><b>+${coins}</b><small>COINS</small></div><div><b>+${xp}</b><small>XP</small></div><div><b>+${s}</b><small>KNOWLEDGE</small></div></div>${qs.length?`<div class="card" style="padding:8px 12px;background:#fff3c4;font-weight:700;font-size:14px;">Quest complete! ${qs.join(', ')}</div>`:''}<div class="row"><button class="btn pri" id="bg" style="flex:1;">Board games instead</button><button class="btn" id="home">Campus</button></div>`,b=>{b.querySelector('#bg').onclick=()=>{closeSheet();boardMenu();};b.querySelector('#home').onclick=()=>{closeSheet();exitClass();};});}
+function exitClass(){if(cls&&cls.api)cls.api.dead=true;fade(()=>{mode='hub';cls=null;['clsHud','desk'].forEach(i=>$(i).classList.add('hide'));['top','dock'].forEach(i=>$(i).classList.remove('hide'));paintTop();});}
+function classStep(dt,t){const playing=cls.kind!=='lesson'&&!isBreak(cls.kind);CL.update(dt,t,{hidden:cls.hidden,playing});const st=CL.status();
+ if(playing&&!cls.over&&!sheetOpen){if(st.seen&&!cls.hidden)cls.sus+=60*dt;else cls.sus=Math.max(0,cls.sus-10*dt);cls.maxSus=Math.max(cls.maxSus,cls.sus);if(cls.sus>=100){cls.sus=100;caught();}}
+ const P_={away:['Break time · teacher\u2019s out','#55745c','#fff'],scold:['CAUGHT!','#a8553f','#fff'],seen:['LOOKING AT YOU!','#a8553f','#fff'],warn:['Turning around…','#e3a347','#3a2a30'],walk:['Walking the rows','#d9c48f','#3a2a30'],scan:['Watching the class','#ecdcbc','#3a2a30'],board:['Writing on the board','#b9d3a8','#3a2a30']};
+ const k=st.state==='scold'?'scold':st.seen?'seen':st.warn?'warn':st.state;const p=P_[k]||P_.board;const tp=$('tPill');tp.textContent=p[0];tp.style.background=p[1];tp.style.color=p[2];$('susFill').style.width=Math.min(100,cls.sus)+'%';}
+// ---------- interiors ----------
+let IN=null,inId=null;const INSIDE=['classroom','canteen','library','lab','admin','common'];
+function arrive(id){if(INSIDE.includes(id))enterInterior(id);else placeSheet(id);}
+function enterInterior(id){if(!IN)IN=createInterior({toast,launch:a=>launch(a),place:p=>placeSheet(p),exit:()=>exitInterior(),prom:a=>promAct(a)});
+ fade(()=>{inId=id;mode='int';pending=null;['top','dock','prompt'].forEach(i=>$(i).classList.add('hide'));const n=IN.enter(id,id==='prom'&&!isFormal()?playerLook(SV.gender):myLook());$('intName').textContent=n;resize();toast('Tap the floor to walk around. Drag to look.');});}
+function exitInterior(){fade(()=>{IN.leave();inId=null;mode='hub';$('prompt').classList.add('hide');['top','dock'].forEach(i=>$(i).classList.remove('hide'));paintTop();});}
+$('intExit').onclick=()=>exitInterior();$('intAct').onclick=()=>inId&&(inId==='prom'?promMenu():placeSheet(inId));
+// ---------- bag, items & trading ----------
+const ITEMS={puff:['Puff-puff',10,'snack'],zobo:['Zobo',15,'snack'],pie:['Meat pie',30,'snack'],chin:['Chin chin',12,'snack'],biro:['Bic biro',8,'stat'],eraser:['Scented eraser',14,'stat'],ruler:['Flexi ruler',12,'stat'],card:['Football sticker',20,'card'],gold:['Golden sticker',60,'card'],comic:['Comic book',40,'fun'],bracelet:['Beaded bracelet',35,'fun'],marbles:['Bag of marbles',25,'fun']};
+Object.assign(ITEMS,{taj_card:['Taj Mahal postcards',10,'souv'],taj_note:['Inlay-pattern notebook',20,'stat'],taj_bangle:['Glass bangles',30,'souv'],taj_key:['Mini dome keyring',25,'souv'],taj_model:['Marble Taj model',60,'souv']});
+const LIKES={Chidi:['comic','marbles'],Tunde:['card','gold'],Amaka:['comic','ruler'],Zainab:['bracelet','eraser'],Emeka:['puff','pie','chin','zobo'],Funmi:['bracelet','zobo'],Bayo:['marbles','biro'],Halima:['ruler','eraser']};
+function bag(){if(!SV.bag){SV.bag={biro:2,card:1,chin:1};save();}return SV.bag;}
+function npcBag(n){SV.nbag=SV.nbag||{};if(!SV.nbag[n]){const ks=Object.keys(ITEMS),b={};const s=n.split('').reduce((a,c)=>a+c.charCodeAt(0),0);for(let k=0;k<4;k++){const it=ks[(s*7+k*5)%ks.length];b[it]=(b[it]||0)+1;}SV.nbag[n]=b;}return SV.nbag[n];}
+const addItem=(b,k,d)=>{b[k]=(b[k]||0)+d;if(b[k]<=0)delete b[k];};
+const valFor=(n,k)=>ITEMS[k][1]*((LIKES[n]||[]).includes(k)?1.6:1);
+function feedPost(who,text){SV.feed=SV.feed||[];SV.feed.unshift({id:Date.now()+Math.random(),who,text,ts:Date.now(),likes:3+Math.floor(Math.random()*12),liked:0,com:[]});SV.feed=SV.feed.slice(0,30);save();phoneBadge();}
+function showBag(){const b=bag();const rows=Object.entries(b).map(([k,c])=>{const [n,v,cat]=ITEMS[k];return `<div class="opt" style="cursor:default;"><span class="glyph">${c}</span><div style="flex:1;"><b>${n}</b><small>Worth about ₦${v}${cat==='snack'?' · Eat for +5 XP':''}</small></div>${cat==='snack'?`<button class="btn" data-eat="${k}" style="font-size:15px;padding:3px 10px;">Eat</button>`:''}</div>`;}).join('')||'<div style="font-size:14px;">Your bag is empty. Buy snacks to keep at the canteen, or win them in games.</div>';
+ openSheet(`<div class="hand" style="font-size:32px;line-height:1;">Your bag</div><div style="font-size:13px;">Anything here can be traded with classmates. Each of them loves different things.</div>${rows}
+  <div style="font-size:13px;font-weight:700;margin-top:4px;">Trade with…</div><div class="row" style="flex-wrap:wrap;gap:6px;">${Object.keys(PEOPLE).map(n=>`<button class="btn" data-tr="${n}" style="font-size:15px;padding:3px 10px;border-color:${PEOPLE[n].col};">${n}</button>`).join('')}</div><button class="btn" id="ok">Close</button>`,x=>{x.querySelector('#ok').onclick=closeSheet;
+  x.querySelectorAll('[data-eat]').forEach(e=>e.onclick=()=>{addItem(bag(),e.dataset.eat,-1);addXP(5);sfx('coin');save();toast('Yum.');showBag();});x.querySelectorAll('[data-tr]').forEach(e=>e.onclick=()=>tradeWith(e.dataset.tr));});}
+function keepShop(){openSheet(`<div class="hand" style="font-size:30px;line-height:1;">Buy to keep</div><div style="font-size:13px;">These go in your bag for trading or snacking later.</div>${Object.entries(ITEMS).filter(([k,v])=>k!=='gold').map(([k,[n,p]])=>`<button class="opt" data-kb="${k}"><span class="glyph">₦</span><div style="flex:1;"><b>${n}</b><small>You have ${bag()[k]||0}</small></div><span class="tag">₦${p}</span></button>`).join('')}<button class="btn" id="ok">Done</button>`,x=>{x.querySelector('#ok').onclick=closeSheet;
+ x.querySelectorAll('[data-kb]').forEach(e=>e.onclick=()=>{const k=e.dataset.kb,p=ITEMS[k][1];if(SV.bank<p){toast('Mama Titi: "Your money no reach!"');return;}addBank(-p);addItem(bag(),k,1);save();sfx('coin');keepShop();});});}
+function tradeWith(n){const mine=bag(),theirs=npcBag(n),give={},get={};let coinsIn=0,coinsOut=0,reply=`${n} opens their bag.${(LIKES[n]||[]).length?` They love: ${LIKES[n].map(k=>ITEMS[k][0]).join(', ')}.`:''}`;
+ const paint=()=>{const gv=Object.entries(give).reduce((a,[k,c])=>a+valFor(n,k)*c,0)+coinsOut,gt=Object.entries(get).reduce((a,[k,c])=>a+ITEMS[k][1]*c,0)+coinsIn;const fr=rel(n).f;const need=gt*(1.1-fr/250);const mood=gt+gv===0?0.5:Math.max(0,Math.min(1,gv/(need||1)/2));
+  const chip=(k,c,side,sel)=>`<button class="btn" data-${side}="${k}" style="font-size:14px;padding:3px 8px;${sel?'background:#e3a347;':''}">${ITEMS[k][0]}${c>1?' ×'+c:''}${sel?' ('+sel+')':''}</button>`;
+  openSheet(`<div class="row" style="justify-content:space-between;"><span class="hand" style="font-size:30px;line-height:1;">Trade with ${n}</span><span class="tag">${tierOf(rel(n).f)[1]}</span></div><div style="font-size:13px;min-height:34px;">${reply}</div>
+   <div style="font-size:12px;font-weight:700;">YOU GIVE (tap your items)</div><div class="row" style="flex-wrap:wrap;gap:5px;">${Object.entries(mine).map(([k,c])=>chip(k,c,'g',give[k])).join('')||'<small>Nothing in your bag.</small>'}<button class="btn" data-co="5" style="font-size:14px;padding:3px 8px;">+₦5</button></div>${coinsOut?`<small>Plus ₦${coinsOut} cash</small>`:''}
+   <div style="font-size:12px;font-weight:700;margin-top:6px;">YOU GET (tap ${n}'s items)</div><div class="row" style="flex-wrap:wrap;gap:5px;">${Object.entries(theirs).map(([k,c])=>chip(k,c,'t',get[k])).join('')||'<small>Their bag is empty.</small>'}<button class="btn" data-ci="5" style="font-size:14px;padding:3px 8px;">+₦5 from them</button></div>${coinsIn?`<small>Plus ₦${coinsIn} from ${n}</small>`:''}
+   <div style="font-size:12px;font-weight:700;margin-top:6px;">${n.toUpperCase()}'S MOOD</div><div class="qbar" style="height:12px;"><div style="width:${mood*100}%;background:${mood>=0.5?'#55745c':'#a8553f'}"></div></div>
+   <div class="row" style="gap:6px;"><button class="btn pri" id="go" style="flex:1;">Propose trade</button><button class="btn" id="clr">Clear</button><button class="btn" id="bk">Back</button></div>`,x=>{
+   x.querySelector('#bk').onclick=showBag;x.querySelector('#clr').onclick=()=>{for(const k in give)delete give[k];for(const k in get)delete get[k];coinsIn=coinsOut=0;paint();};
+   x.querySelectorAll('[data-g]').forEach(e=>e.onclick=()=>{const k=e.dataset.g;give[k]=((give[k]||0)+1)%((mine[k]||0)+1);if(!give[k])delete give[k];paint();});
+   x.querySelectorAll('[data-t]').forEach(e=>e.onclick=()=>{const k=e.dataset.t;get[k]=((get[k]||0)+1)%((theirs[k]||0)+1);if(!get[k])delete get[k];paint();});
+   x.querySelector('[data-co]').onclick=()=>{if(SV.bank-coinsOut>=5)coinsOut+=5;paint();};x.querySelector('[data-ci]').onclick=()=>{coinsIn+=5;paint();};
+   x.querySelector('#go').onclick=()=>{if(gt+gv===0){reply='Pick something first.';return paint();}if(coinsOut>SV.bank){reply='You don’t have that much cash.';return paint();}
+    if(gv>=need){for(const [k,c] of Object.entries(give)){addItem(mine,k,-c);addItem(theirs,k,c);}for(const [k,c] of Object.entries(get)){addItem(theirs,k,-c);addItem(mine,k,c);}if(coinsOut)addBank(-coinsOut);if(coinsIn)addBank(coinsIn);
+     const fav=Object.keys(give).some(k=>(LIKES[n]||[]).includes(k));bond(n,fav?4:2,fav?`You traded ${n} something they love`:`Traded with ${n}`);sfx('power');
+     const got=Object.entries(get).map(([k,c])=>ITEMS[k][0]+(c>1?' ×'+c:'')).join(', ');feedPost(n,`Just traded with you${got?' for '+got:''}. ${fav?'Best deal this term!':'Fair is fair.'}`);toast('Deal!');
+     for(const k in give)delete give[k];for(const k in get)delete get[k];coinsIn=coinsOut=0;reply=`${n}: "${fav?'Ahh, you know what I like!':'Okay, deal.'}"`;save();}
+    else{reply=`${n}: "${gv<need*0.5?'Abeg, that’s not a trade, that’s a robbery.':'Add a small something and we’re good.'}"`;sfx('thud');}paint();};});};paint();}
+// ---------- phone: messages, feed, contacts ----------
+const MSGT={invite:n=>{const g=PEOPLE[n].game,G=GAMES[g][0],r=rel(n);return {text:r.l>r.w&&r.l>0?`You still owe me a rematch in ${G}. Break time?`:`Free now? Let's play ${G}.`,opts:[['I’m in!','play',g],['Maybe after class','later'],['Can’t today','no'],['Something else?','alt']]};},
+ trade:n=>{const want=(LIKES[n]||['biro'])[0];const has=Object.keys(npcBag(n))[0];return {text:`Do you have ${ITEMS[want][0]}? I'll swap my ${has?ITEMS[has][0]:'something nice'}.`,opts:[['Let’s trade','trade'],['No thanks','no']]};},
+ gist:n=>{const f=(SV.feed||[]).find(p=>p.who!==n);return {text:f?`Did you see ${f.who==='You'?'your':f.who+'’s'} post? "${f.text.slice(0,60)}${f.text.length>60?'…':''}" The whole class is talking.`:`Gist! Mr. Adeyemi wore one shoe to assembly today. One!`,opts:[['Tell me more!','gist'],['Abeg, no gist','no']]};},
+ study:n=>({text:`Test is coming. Want to sit in on a lesson together? I'll explain the hard parts.`,opts:[['Yes, let’s go','lesson'],['Later','later']]})};
+const KIND={Chidi:['invite','gist'],Tunde:['invite','invite'],Amaka:['study','invite'],Zainab:['gist','gist','invite'],Emeka:['trade','invite'],Funmi:['invite','trade'],Bayo:['trade','study'],Halima:['study','gist']};
+function sendMsg(n){const k=KIND[n][Math.floor(Math.random()*KIND[n].length)];const m=MSGT[k](n);SV.msgs=SV.msgs||[];SV.msgs.unshift({id:Date.now(),from:n,k,text:m.text,opts:m.opts,ans:null,ts:Date.now(),read:0});SV.msgs=SV.msgs.slice(0,40);save();phoneBadge();return SV.msgs[0];}
+function replyMsg(id,i){const m=(SV.msgs||[]).find(x=>x.id===id);if(!m||m.ans!=null)return;const [lab,act,arg]=m.opts[i];m.ans=i;const n=m.from;let back='';
+ if(act==='play'){back='Oya! Coming.';bond(n,2,`Said yes to ${n}’s invite`);}else if(act==='later'){back='Okay o. I’m holding you to it.';rel(n).promise=1;}else if(act==='no'){back=['No wahala.','Okay, next time.','Hmm. Okay.'][Math.floor(Math.random()*3)];}
+ else if(act==='alt'){const alt=Object.keys(GAMES).filter(k=>k!==PEOPLE[n].game);const g=alt[Math.floor(Math.random()*alt.length)];back=`Fine, ${GAMES[g][0]} then?`;m.alt=g;}else if(act==='trade')back='Let me open my bag…';else if(act==='gist'){back=n==='Zainab'?'Ehen! So after assembly… I’ll tell you at break, it’s too long to type!':'Haha, that’s all I know.';bond(n,1);}
+ else if(act==='lesson'){back='See you in class!';bond(n,2,`Studied with ${n}`);}m.back=back;if(act==='play')rel(n).promise=0;save();
+ if(act==='play'||act==='lesson'||act==='trade'||act==='alt')setTimeout(()=>{closePhone();if(mode==='pov')exitPov();if(act==='play')startClass(arg);else if(act==='lesson')startClass('lesson');else if(act==='trade')tradeWith(n);else if(act==='alt')startClass(m.alt);},act==='alt'?900:400);
+ openApp('thread',n);}
+function phoneBadge(){const u=(SV.msgs||[]).filter(m=>!m.read).length;const b=$('phB');if(b){b.textContent=u?u:'';b.style.display=u?'':'none';}}
+function ago(ts){const s=Math.floor((Date.now()-ts)/1000);return s<60?'now':s<3600?Math.floor(s/60)+'m':s<86400?Math.floor(s/3600)+'h':Math.floor(s/86400)+'d';}
+function openPhone(){$('phone').classList.remove('hide');sheetOpen=true;openApp('home');}function closePhone(){$('phone').classList.add('hide');sheetOpen=false;phoneBadge();}
+function openApp(a,arg){if(SOC_APPS[a]){closePhone();return SOC_APPS[a]();}const S=$('phScr');const back=`<button class="btn" data-home style="font-size:15px;padding:2px 10px;">‹ Home</button>`;
+ if(a==='contacts'){closePhone();return showFriends();}if(a==='bag'){closePhone();return showBag();}if(a==='pov'){closePhone();return mode==='pov'?null:startPov();}
+ if(a==='home'){const u=(SV.msgs||[]).filter(m=>!m.read).length;const APPS=[['msgs','Messages','#55745c',u],['feed','School Feed','#4f6e8a',0],['contacts','Contacts','#c0563f',0],['bag','Bag & Trade','#e3a347',0],['pov','Walk mode','#6b4a7a',0],['events','School life','#a8553f',0],['ward','Wardrobe','#c97a9a',0],['book','Scrapbook','#8a6a3a',0]];
+  S.innerHTML=`<div class="hand" style="font-size:30px;line-height:1;text-align:center;margin:10px 0 2px;">${new Date().toTimeString().slice(0,5)}</div><div style="text-align:center;font-size:12px;margin-bottom:14px;">Unity Secondary School</div>
+   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px 8px;">${APPS.map(([id,n,c,b])=>`<button data-app="${id}" style="border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-family:inherit;color:#3a2a30;"><span style="position:relative;width:54px;height:54px;border-radius:16px;background:${c};border:2.5px solid #3a2a30;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Patrick Hand',cursive;font-size:24px;box-shadow:0 3px 0 #3a2a30;">${n[0]}${b?`<span style="position:absolute;right:-6px;top:-6px;background:#a8553f;color:#fff;border:2px solid #fff;border-radius:10px;font-size:11px;padding:0 5px;font-family:'Atkinson Hyperlegible',sans-serif;">${b}</span>`:''}</span><span style="font-size:11px;font-weight:700;">${n}</span></button>`).join('')}</div>`;}
+ if(a==='msgs'){const by={};(SV.msgs||[]).forEach(m=>{(by[m.from]=by[m.from]||[]).push(m);});const rows=Object.entries(by).map(([n,l])=>`<button data-th="${n}" class="opt" style="margin:0 0 6px;width:100%;"><span class="glyph" style="background:${PEOPLE[n].col};color:#fff;">${n[0]}</span><div style="flex:1;min-width:0;text-align:left;"><b>${n}</b><small style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">${l[0].text}</small></div><span style="font-size:11px;">${ago(l[0].ts)}${l.some(m=>!m.read)?' ●':''}</span></button>`).join('')||'<div style="font-size:13px;">No messages yet. Your classmates will text you during the day.</div>';
+  S.innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:8px;">${back}<b>Messages</b></div>${rows}`;}
+ if(a==='thread'){const n=arg;const l=(SV.msgs||[]).filter(m=>m.from===n).reverse();l.forEach(m=>m.read=1);save();const B='max-width:84%;background:#fff;border:2px solid #3a2a30;border-radius:12px 12px 12px 3px;padding:6px 9px;font-size:13px;margin-bottom:5px;';
+  S.innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:8px;"><button class="btn" data-app="msgs" style="font-size:15px;padding:2px 10px;">‹ Messages</button><b>${n}</b></div><div style="font-size:11px;text-align:center;opacity:.7;margin-bottom:6px;">${PEOPLE[n].p} · ${tierOf(rel(n).f)[1]}</div>
+   ${l.map(m=>`<div style="${B}">${m.text}</div>${m.ans!=null?`<div style="max-width:80%;margin-left:auto;background:${PEOPLE[n].col};color:#fff;border-radius:12px 12px 3px 12px;padding:6px 9px;font-size:13px;margin-bottom:5px;">${m.opts[m.ans][0]}</div>${m.back?`<div style="${B}">${m.back}</div>`:''}`:`<div style="display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end;margin-bottom:8px;">${m.opts.map((o,i)=>`<button class="btn" data-r="${m.id},${i}" style="font-size:14px;padding:3px 9px;">${o[0]}</button>`).join('')}</div>`}`).join('')}`;
+  setTimeout(()=>S.scrollTop=S.scrollHeight,0);phoneBadge();}
+ if(a==='feed'){const F=SV.feed||[];S.innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:8px;">${back}<b>School Feed</b></div>${F.map(p=>{const c=p.who==='You'?'#a8553f':PEOPLE[p.who]?PEOPLE[p.who].col:'#3a2a30';return `<div style="background:#fff;border:2px solid #3a2a30;border-radius:12px;padding:8px;margin-bottom:8px;"><div class="row" style="gap:6px;"><span class="glyph" style="width:26px;height:26px;font-size:13px;background:${c};color:#fff;">${p.who[0]}</span><b style="font-size:13px;">${p.who}</b><span style="font-size:11px;opacity:.6;margin-left:auto;">${ago(p.ts)}</span></div><div style="font-size:13px;margin:5px 0;">${p.text}</div>
+   ${p.com.map(c=>`<div style="font-size:12px;opacity:.8;">You: ${c}</div>`).join('')}<div class="row" style="gap:5px;flex-wrap:wrap;"><button class="btn" data-like="${p.id}" style="font-size:13px;padding:2px 8px;${p.liked?'background:#e3a347;':''}">♥ ${p.likes+p.liked}</button>${p.who!=='You'&&!p.com.length?['Congrats!','Hahaha','Rematch?'].map(c=>`<button class="btn" data-com="${p.id}|${c}" style="font-size:13px;padding:2px 8px;">${c}</button>`).join(''):''}</div></div>`;}).join('')||'<div style="font-size:13px;">Nothing yet. Play games, finish lessons and trade: the school will post about it.</div>'}`;}
+ S.querySelectorAll('[data-home]').forEach(b=>b.onclick=()=>openApp('home'));S.querySelectorAll('[data-app]').forEach(b=>b.onclick=()=>openApp(b.dataset.app));S.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>openApp('thread',b.dataset.th));
+ S.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const [id,i]=b.dataset.r.split(',').map(Number);replyMsg(id,i);});
+ S.querySelectorAll('[data-like]').forEach(b=>b.onclick=()=>{const p=SV.feed.find(x=>String(x.id)===b.dataset.like);if(!p)return;p.liked=p.liked?0:1;if(p.liked&&PEOPLE[p.who])bond(p.who,1);save();openApp('feed');});
+ S.querySelectorAll('[data-com]').forEach(b=>b.onclick=()=>{const [id,c]=b.dataset.com.split('|');const p=SV.feed.find(x=>String(x.id)===id);if(!p)return;p.com.push(c);if(PEOPLE[p.who])bond(p.who,1,`You commented "${c}" on ${p.who}’s post`);save();openApp('feed');});}
+$('phX').onclick=closePhone;$('phBtn').onclick=openPhone;phoneBadge();
+inviteTick=function(dt){if(sheetOpen||!$('invite').classList.contains('hide'))return;invT-=dt;if(invT>0)return;invT=70+Math.random()*60;const names=Object.keys(PEOPLE);const n=names[Math.floor(Math.random()*names.length)];const m=sendMsg(n);
+ $('invite').innerHTML=`<span class="glyph" style="background:${PEOPLE[n].col};color:#fff;">${n[0]}</span><div style="flex:1;font-size:14px;"><b>${n}:</b> ${m.text}</div><button class="btn pri" id="invY" style="font-size:16px;padding:3px 12px;">Reply</button><button class="btn" id="invN" style="font-size:16px;padding:3px 10px;">Later</button>`;
+ $('invite').classList.remove('hide');sfx('coin');const close=()=>$('invite').classList.add('hide');$('invY').onclick=()=>{close();openPhone();openApp('thread',n);};$('invN').onclick=close;setTimeout(close,12000);};
+{const _ce=clsEnd;clsEnd=function(win,m,o){const k=cls&&cls.kind,G=GAMES[k];if(cls&&!cls.over&&G){const opp=G[2];if(win)feedPost('You',`Won ${G[0]}${opp&&opp!=='*'?' against '+opp:''}! ${m}`);else if(opp&&opp!=='*')feedPost(opp,`Beat you at ${G[0]} today. ${['Who’s next?','Easy work.','Rematch anytime.'][Math.floor(Math.random()*3)]}`);
+  if(win&&Math.random()<0.4){const ks=Object.keys(ITEMS);const it=ks[Math.floor(Math.random()*ks.length)];addItem(bag(),it,1);save();setTimeout(()=>toast(`Prize: ${ITEMS[it][0]} added to your bag`),600);}}return _ce(win,m,o);};
+ const _le=lessonEnd;lessonEnd=function(s){if(cls&&!cls.over&&s>=3)feedPost('School',`Shout-out to our SS1 student for scoring ${s}/4 in today’s quiz!`);return _le(s);};
+ const _so=soccerOver;soccerOver=function(r){if(r.kind==='match'&&!r.quit)feedPost('School',`Inter-house final: Red ${r.score[0]} – ${r.score[1]} Blue. ${r.win?'Red House are champions!':r.draw?'Honours even.':'Blue House take the cup.'}`);return _so(r);};}
+// ---------- POV walk mode ----------
+const povCam=new THREE.PerspectiveCamera(68,1,0.1,400);let povYaw=0,povPitch=0,povJoy=[0,0],povBob=0,povRun=false,povDoor=null;
+const DOORS=[...new Set(world.clickables.map(o=>o.userData.bid))].filter(Boolean).map(id=>({id,d:world.doorOf(id)})).filter(o=>o.d);
+let povSave=null;const povSky=(()=>{const c=document.createElement('canvas');c.width=4;c.height=256;const g=c.getContext('2d'),gr=g.createLinearGradient(0,0,0,256);gr.addColorStop(0,'#9cc3dd');gr.addColorStop(0.55,'#d9e6e4');gr.addColorStop(1,'#f3dfb8');g.fillStyle=gr;g.fillRect(0,0,4,256);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;})();
+function povEnv(on){const s=world.scene;if(on){povSave={bg:s.background,fog:s.fog};s.background=povSky;s.fog=new THREE.Fog('#efe0c2',45,170);}else if(povSave){s.background=povSave.bg;s.fog=povSave.fog;povSave=null;}}
+function startPov(){closeSheet();fade(()=>{mode='pov';povEnv(true);P.path=[];pending=null;['dock','prompt','invite'].forEach(i=>$(i).classList.add('hide'));$('povHud').classList.remove('hide');player.visible=false;povYaw=yaw+Math.PI;povPitch=0;povDoor=null;resize();toast('Left thumb: walk · right side: look around');});}
+function exitPov(go){povEnv(false);$('povHud').classList.add('hide');$('prompt').classList.add('hide');player.visible=true;povDoor=null;mode='hub';$('dock').classList.remove('hide');yaw=povYaw+Math.PI;panOff.set(0,0,0);if(go)arrive(go);}
+function povStep(dt,t){if(!sheetOpen){let f=-povJoy[1]+((keys['w']||keys['arrowup'])?1:0)-((keys['s']||keys['arrowdown'])?1:0),s=povJoy[0]+((keys['d']||keys['arrowright'])?1:0)-((keys['a']||keys['arrowleft'])?1:0);
+  if(keys['q'])povYaw+=dt*1.8;if(keys['e'])povYaw-=dt*1.8;const l=Math.hypot(f,s);if(l>1){f/=l;s/=l;}
+  if(l>0.08){const sp=(povRun||keys['shift']?6.2:3.4)*Math.min(1,l);const fx=Math.sin(povYaw),fz=Math.cos(povYaw);const mx=fx*f-fz*s,mz=fz*f+fx*s;const nx=P.x+mx*sp*dt,nz=P.z+mz*sp*dt;
+   if(world.free(nx,nz)){P.x=nx;P.z=nz;}else if(world.free(nx,P.z))P.x=nx;else if(world.free(P.x,nz))P.z=nz;povBob+=dt*sp*2.2;}
+  player.position.set(P.x,0,P.z);player.rotation.y=povYaw;}
+ const eye=1.55+Math.sin(povBob)*0.045;povCam.position.set(P.x,eye,P.z);povCam.lookAt(P.x+Math.sin(povYaw)*Math.cos(povPitch),eye+Math.sin(povPitch),P.z+Math.cos(povYaw)*Math.cos(povPitch));
+ let best=null,bd=3.2;DOORS.forEach(o=>{const d=Math.hypot(o.d[0]-P.x,o.d[1]-P.z);if(d<bd){bd=d;best=o;}});
+ if(best&&!sheetOpen){if(povDoor!==best.id){povDoor=best.id;const pl=PLACES[best.id];$('promptT').textContent=pl?pl.n:best.id;$('promptB').textContent=INSIDE.includes(best.id)?'Go inside':'Open';$('promptB').onclick=()=>exitPov(best.id);}$('prompt').classList.remove('hide');}else if(povDoor){povDoor=null;$('prompt').classList.add('hide');}
+ const asp=canvas.clientWidth/Math.max(1,canvas.clientHeight);if(Math.abs(povCam.aspect-asp)>0.01){povCam.aspect=asp;povCam.updateProjectionMatrix();}
+ camT.set(P.x,0,P.z);world.update(dt,t,camT);post.render(world.scene,povCam,t);}
+{const j=$('povJoy'),k=j.firstElementChild;let id=null;const mv=e=>{const r=j.getBoundingClientRect();let dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2;const l=Math.hypot(dx,dy),m=46;if(l>m){dx*=m/l;dy*=m/l;}k.style.transform=`translate(${dx}px,${dy}px)`;povJoy=[dx/m,dy/m];};
+ j.addEventListener('pointerdown',e=>{e.stopPropagation();id=e.pointerId;j.setPointerCapture(id);mv(e);});j.addEventListener('pointermove',e=>{if(e.pointerId===id)mv(e);});const end=()=>{id=null;povJoy=[0,0];k.style.transform='';};j.addEventListener('pointerup',end);j.addEventListener('pointercancel',end);
+ const lp=$('povLook');let lid=null,lx=0,ly=0;lp.addEventListener('pointerdown',e=>{lid=e.pointerId;lp.setPointerCapture(lid);lx=e.clientX;ly=e.clientY;});lp.addEventListener('pointermove',e=>{if(e.pointerId!==lid)return;povYaw-=(e.clientX-lx)*0.006;povPitch=THREE.MathUtils.clamp(povPitch-(e.clientY-ly)*0.004,-0.6,0.5);lx=e.clientX;ly=e.clientY;});
+ const le=()=>lid=null;lp.addEventListener('pointerup',le);lp.addEventListener('pointercancel',le);
+ $('povRun').onclick=()=>{povRun=!povRun;$('povRun').classList.toggle('pri',povRun);};$('povExit').onclick=()=>fade(()=>exitPov());}
+// ================= Social life II: calendar, wardrobe, prom, elections, scrapbook =================
+const SOC=SV.soc||(SV.soc={v:1,day:1,pt:0,ap:3,did:{},mem:[],cnt:{games:0,matches:0},ward:{own:['t_white','b_khaki','h_short','f_suit'],fit:{},pre:{},uni:false},el:null,pres:null,prom:null,hist:{kept:0,broke:0}});
+const dOf=()=>((SOC.day-1)%7)+1,termOf=()=>Math.floor((SOC.day-1)/7)+1;
+const CAL=[[1,'Election registration opens'],[2,'Campaign day · registration closes'],[3,'Candidates\u2019 debate'],[4,'Voting day'],[5,'Prom preparation'],[6,'Prom preparation'],[7,'Prom Night']];
+const hsh=s=>{let h=7;for(const c of s)h=(h*31+c.charCodeAt(0))%100003;return h;};
+function msg(from,text,opts){SV.msgs=SV.msgs||[];SV.msgs.unshift({id:Date.now()+Math.random(),from,k:'ev',text,opts:opts||[['Okay!','no']],ans:null,ts:Date.now(),read:0});SV.msgs=SV.msgs.slice(0,40);save();phoneBadge();}
+function addMem(t,who,txt,col){SOC.mem.unshift({t,day:SOC.day,term:termOf(),who,txt,col:col||'#a8553f'});SOC.mem=SOC.mem.slice(0,40);save();toast('Saved to your scrapbook: '+t);}
+// ---------- wardrobe ----------
+const WARD=[{id:'t_white',s:'top',n:'Plain white tee',p:0,v:{shirt:'#f2efe6'}},{id:'t_ankara',s:'top',n:'Ankara print shirt',p:90,v:{shirt:'#d9822b'}},{id:'t_lilac',s:'top',n:'Lilac tee',p:60,v:{shirt:'#9b86c4'}},{id:'t_polo',s:'top',n:'Green polo',p:70,v:{shirt:'#4f7a52'}},{id:'t_denim',s:'top',n:'Denim shirt',p:110,v:{shirt:'#4a6a8f'}},{id:'t_jersey',s:'top',n:'Super Eagles jersey',p:140,v:{shirt:'#1f8a4c'}},
+ {id:'b_khaki',s:'bottom',n:'Khaki trousers',p:0,v:{bottom:'#b59b6e',trousers:1}},{id:'b_jeans',s:'bottom',n:'Black jeans',p:90,v:{bottom:'#22252b',trousers:1}},{id:'b_shorts',s:'bottom',n:'Sports shorts',p:50,v:{bottom:'#22345e'}},{id:'b_skirt',s:'bottom',n:'Ankara skirt',p:80,v:{bottom:'#b5573e',skirt:1}},{id:'b_dskirt',s:'bottom',n:'Denim skirt',p:80,v:{bottom:'#3f5a7a',skirt:1}},
+ {id:'f_suit',s:'full',n:'Borrowed blazer & tie',p:0,v:{vest:1,shirt:'#f2efe6',bottom:'#22252b',trousers:1},formal:1},{id:'f_senator',s:'full',n:'Senator suit',p:180,v:{shirt:'#2f3a52',bottom:'#2f3a52',trousers:1},formal:1},{id:'f_agbada',s:'full',n:'Cream agbada',p:240,v:{coat:1,bottom:'#e8dcc2',trousers:1},formal:1},{id:'f_gown',s:'full',n:'Ankara gown',p:200,v:{shirt:'#7a3e8a',bottom:'#7a3e8a',skirt:1},formal:1},
+ {id:'h_short',s:'hair',n:'Low cut',p:0,v:{hair:'short'}},{id:'h_afro',s:'hair',n:'Afro',p:40,v:{hair:'afro'}},{id:'h_braids',s:'hair',n:'Braids',p:60,v:{hair:'braids'}},{id:'h_puffs',s:'hair',n:'Afro puffs',p:50,v:{hair:'puffs'}},{id:'h_bun',s:'hair',n:'Bun',p:40,v:{hair:'bun'}},{id:'h_wrap',s:'hair',n:'Gele head-wrap',p:90,v:{hair:'wrap'},formal:1},
+ {id:'x_specs',s:'extra',n:'Fashion specs',p:70,v:{glasses:1}}];
+const SLOTN={top:'Top',bottom:'Bottom',full:'Full outfit',hair:'Hair',extra:'Extra'};const WI=id=>WARD.find(x=>x.id===id);
+const _myLook=myLook;myLook=function(){const L=_myLook();const W=SOC.ward;if(W.uni||mode==='class')return L;const f=W.fit;
+ if(f.top||f.bottom||f.full){L.casual=1;delete L.vest;}if(f.bottom||f.full){delete L.skirt;delete L.trousers;}
+ ['top','bottom','full','hair','extra'].forEach(s=>{const it=WI(f[s]);if(it)Object.assign(L,it.v);});if(f.hair==='h_wrap')L.hair='wrap';return L;};
+function equip(id){const it=WI(id),f=SOC.ward.fit;if(!it)return;if(f[it.s]===id){delete f[it.s];}else{f[it.s]=id;if(it.s==='full'){delete f.top;delete f.bottom;}if(it.s==='top'||it.s==='bottom')delete f.full;}save();buildPlayer();}
+const isFormal=()=>{const f=SOC.ward.fit;return !SOC.ward.uni&&!!(WI(f.full)&&WI(f.full).formal);};
+const FCOM={'Class clown':['Who dressed you? Because they deserve an award.','Ehen! See fine boy/girl!'],'Competitive athlete':['Clean. Now beat me in that outfit.','That fit is fast.'],'Studious':['That colour combination is very well chosen.','You look organised. I respect it.'],'Dramatic storyteller':['STOP. That outfit is giving main character.','I\u2019m telling everybody about this look.'],'Snack trader':['That outfit is worth at least ten meat pies.','Where did you buy it? I want a discount.']};
+function fashionComment(){const ns=Object.keys(PEOPLE);const n=ns[Math.floor(Math.random()*ns.length)];const L=FCOM[PEOPLE[n].p]||['That outfit looks great on you!','I like the colour combination.','That is definitely a bold choice.'];setTimeout(()=>toast(`${n}: \u201c${L[Math.floor(Math.random()*L.length)].replace('boy/girl',SV.gender==='girl'?'girl':'boy')}\u201d`),700);}
+let tryOn=null;
+function showWardrobe(tab='mine'){const W=SOC.ward,f=W.fit;
+ const slot=s=>{const items=WARD.filter(x=>x.s===s&&(tab==='mine'?W.own.includes(x.id):!W.own.includes(x.id)&&(tab!=='prom'||x.formal)));if(!items.length)return '';
+  return `<div style="font-size:12px;font-weight:700;margin-top:6px;">${SLOTN[s].toUpperCase()}</div><div class="row" style="flex-wrap:wrap;gap:5px;">${items.map(x=>{const sw=x.v.shirt||x.v.bottom||'#3a2a30';const on=f[s]===x.id;
+   return tab==='mine'?`<button class="btn" data-eq="${x.id}" style="font-size:14px;padding:3px 9px;${on?'background:#e3a347;':''}"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${sw};border:1.5px solid #3a2a30;margin-right:4px;"></span>${x.n}${x.formal?' ★':''}</button>`
+   :`<div class="opt" style="cursor:default;margin:0;width:100%;"><span class="glyph" style="background:${sw};"></span><div style="flex:1;"><b>${x.n}${x.formal?' ★':''}</b><small>${SLOTN[s]}${x.formal?' · formal, counts for Prom dress code':''}</small></div><button class="btn" data-try="${x.id}" style="font-size:14px;padding:2px 8px;${tryOn&&tryOn.id===x.id?'background:#e3a347;':''}">Try on</button><button class="btn pri" data-buy="${x.id}" style="font-size:14px;padding:2px 8px;">₦${x.p}</button></div>`;}).join('')}</div>`;};
+ openSheet(`<div class="row" style="justify-content:space-between;"><span class="hand" style="font-size:32px;line-height:1;">${tab==='mine'?'Wardrobe':tab==='prom'?'Prom Night catalogue':'Boutique'}</span><span class="tag">₦${SV.bank}</span></div>
+  <div class="row" style="gap:6px;"><button class="btn ${tab==='mine'?'pri':''}" data-tab="mine" style="font-size:15px;padding:3px 12px;">My clothes</button><button class="btn ${tab==='shop'?'pri':''}" data-tab="shop" style="font-size:15px;padding:3px 12px;">Mama Bisi\u2019s Boutique</button><button class="btn ${tab==='prom'?'pri':''}" data-tab="prom" style="font-size:15px;padding:3px 12px;">Prom catalogue ★</button></div>
+  ${tab==='prom'?'<div style="font-size:13px;">Gowns, suits, agbada and kaftans for Prom Night. No formal outfit means you show up in your school uniform!</div>':''}${tab==='mine'?`<label class="row" style="gap:6px;font-size:13px;"><input type="checkbox" id="uni" ${W.uni?'checked':''}> Wear school uniform (always worn in class)</label>`:'<div style="font-size:13px;">Tap Try on to see it on your character behind this panel. Anything you don\u2019t buy comes off when you leave.</div>'}
+  ${['full','top','bottom','hair','extra'].map(slot).join('')||'<div style="font-size:13px;">You own everything here!</div>'}
+  ${tab==='mine'?`<div style="font-size:12px;font-weight:700;margin-top:8px;">OUTFIT PRESETS</div><div class="row" style="flex-wrap:wrap;gap:5px;">${['Casual','Sports','Formal','Weekend'].map(p=>`<button class="btn" data-ld="${p}" style="font-size:14px;padding:3px 9px;" ${W.pre[p]?'':'disabled'}>Wear ${p}</button><button class="btn" data-sv="${p}" style="font-size:12px;padding:2px 6px;">Save</button>`).join('')}</div>`:''}
+  <button class="btn" id="ok" style="margin-top:6px;">Done</button>`,b=>{
+  const revert=()=>{if(tryOn){SOC.ward.fit=tryOn.prev;tryOn=null;save();buildPlayer();}};
+  b.querySelector('#ok').onclick=()=>{revert();closeSheet();};b.querySelectorAll('[data-tab]').forEach(e=>e.onclick=()=>{revert();showWardrobe(e.dataset.tab);});
+  const u=b.querySelector('#uni');if(u)u.onchange=()=>{W.uni=u.checked;save();buildPlayer();};
+  b.querySelectorAll('[data-eq]').forEach(e=>e.onclick=()=>{equip(e.dataset.eq);showWardrobe('mine');});
+  b.querySelectorAll('[data-try]').forEach(e=>e.onclick=()=>{const id=e.dataset.try;if(!tryOn)tryOn={prev:JSON.parse(JSON.stringify(W.fit))};else W.fit=JSON.parse(JSON.stringify(tryOn.prev));tryOn.id=id;W.uni=false;equip(id);showWardrobe(tab);});
+  b.querySelectorAll('[data-buy]').forEach(e=>e.onclick=()=>{const it=WI(e.dataset.buy);if(W.own.includes(it.id))return;if(SV.bank<it.p){toast('Mama Bisi: "Come back when your money reach."');sfx('thud');return;}
+   addBank(-it.p);W.own.push(it.id);if(tryOn&&tryOn.id===it.id)tryOn=null;else{if(tryOn){W.fit=tryOn.prev;tryOn=null;}equip(it.id);}save();sfx('power');toast(`Bought ${it.n}!`);fashionComment();showWardrobe(tab);});
+  b.querySelectorAll('[data-sv]').forEach(e=>e.onclick=()=>{W.pre[e.dataset.sv]={fit:JSON.parse(JSON.stringify(W.fit)),uni:W.uni};save();toast(`Saved as ${e.dataset.sv}`);showWardrobe('mine');});
+  b.querySelectorAll('[data-ld]').forEach(e=>e.onclick=()=>{const p=W.pre[e.dataset.ld];if(!p)return;W.fit=JSON.parse(JSON.stringify(p.fit));W.uni=p.uni;save();buildPlayer();fashionComment();showWardrobe('mine');});});}
+// ---------- election data ----------
+const PROMS=[{id:'gameday',n:'Monthly class game day',tag:'games',ben:'More fun, mixes groups',lim:'Only during breaks',task:'Play 2 break-time games with the class',k:'games',goal:2},
+ {id:'board',n:'Assignment board & reminders',tag:'study',ben:'Nobody misses homework',lim:'Needs someone to update it',task:'Post 3 homework reminders (one a day)',k:'remind',goal:3},
+ {id:'reading',n:'Class reading corner',tag:'study',ben:'Quiet place to read',lim:'Needs a teacher\u2019s approval',task:'Get Mr. Adeyemi to approve it',k:'approve',goal:1},
+ {id:'interhouse',n:'More inter-house matches',tag:'sports',ben:'House spirit',lim:'Depends on the pitch schedule',task:'Play a full inter-house football match',k:'matches',goal:1},
+ {id:'talent',n:'Class talent showcase',tag:'arts',ben:'Shows hidden skills',lim:'Needs performers',task:'Sign up 3 performers',k:'perf',goal:3},
+ {id:'suggest',n:'Student suggestion box',tag:'fair',ben:'Every voice heard',lim:'Not every idea is possible',task:'Answer 3 suggestions',k:'sugg',goal:3},
+ {id:'groups',n:'Fair group-project teams',tag:'fair',ben:'No more dumping work on one person',lim:'Teachers set the projects',task:'Settle 2 class disputes',k:'dispute',goal:2},
+ {id:'news',n:'Weekly class news on the feed',tag:'comms',ben:'Everyone knows what\u2019s happening',lim:'Takes regular effort',task:'Post 2 class updates',k:'news',goal:2}];
+const PI=id=>PROMS.find(p=>p.id===id);
+const SLOGANS=['A Better Class, Together.','Your Voice, Our Future.','More Games, Better Class Life.','Fairness, Teamwork, Progress.','Promises We Can Keep.'];
+const CCOL=['#a8553f','#e3a347','#6b4a7a','#c97a9a'];
+const RIV={Amaka:{slogan:'Promises We Can Keep.',col:'#55745c',pro:['board','reading'],q:2.6,fans:{Halima:30,Bayo:22,Ifeanyi:16,Kemi:16,Ada:12}},Tunde:{slogan:'Sports, Spirit, Success!',col:'#4f6e8a',pro:['interhouse','gameday'],q:2.1,fans:{Chidi:24,Funmi:18,Musa:20,Segun:16,Obinna:14}}};
+const GEN=['Ngozi','Ifeanyi','Sola','Kemi','Musa','Ada','Segun','Hauwa','Obinna','Tolu','Kelechi','Bisi','Yusuf','Ronke'];
+const TAGS=['games','study','sports','arts','fair','comms'],TAGN={games:'class games',study:'schoolwork',sports:'sports',arts:'arts & talent',fair:'fairness',comms:'communication'};
+const VPRI={Chidi:['games','arts'],Zainab:['comms','arts'],Emeka:['games','fair'],Funmi:['arts','sports'],Bayo:['fair','study'],Halima:['study','comms']};
+const voters=()=>[...Object.keys(PEOPLE).filter(n=>!RIV[n]),...GEN];
+const vPri=n=>{if(VPRI[n])return VPRI[n];const h=hsh(n);const a=TAGS[h%6];let b=TAGS[(h>>3)%6];if(b===a)b=TAGS[(h+1)%6];return[a,b];};
+const DEBQ=[['How will you make class activities more inclusive?',[['Rotate who picks the activity, so every group gets a turn.','Practical',3,'fair','Clear and doable.'],['Ask everyone through a suggestion box first.','Collaborative',3,'fair','You listen before acting. Voters like that.'],['A party every week, for everybody!','Ambitious',1,'games','Fun, but the school will never allow it.'],['First step: Chidi tells fewer jokes.','Humorous',2,null,'The class laughed, but it isn\u2019t a plan.']]],
+ ['What will you do if you can\u2019t keep all your promises?',[['Tell the class early and explain why.','Collaborative',3,'comms','Honest and realistic.'],['Do the most important one first, then the rest.','Practical',3,'study','Shows you can prioritise.'],['I will keep ALL of them. Guaranteed.','Ambitious',1,null,'Nobody believes a guarantee.'],['Then I\u2019ll make new promises!','Humorous',1,null,'Funny, but it hurts your trust.']]],
+ ['How will you represent students who disagree with you?',[['Hold a short class meeting every week.','Collaborative',3,'fair','Gives everyone a voice.'],['Run a poll on the class feed.','Practical',3,'comms','Quick and fair.'],['They\u2019ll agree with me eventually.','Ambitious',1,null,'Comes across as arrogant.'],['I\u2019ll win them over with puff-puff.','Humorous',1,null,'Even as a joke, bribery loses votes.']]],
+ ['What is your plan for organising class events?',[['A shared calendar and a volunteer rota.','Practical',3,'comms','Concrete and feasible.'],['Let each house plan one event a term.','Collaborative',3,'sports','Spreads the work fairly.'],['A huge festival with a celebrity guest!','Ambitious',1,'arts','Exciting, but not realistic.'],['Whatever happens, there will be jollof.','Humorous',2,'games','Gets a cheer, but it\u2019s not a plan.']]],
+ ['How will you help students who are struggling with schoolwork?',[['Set up study pairs before every test.','Practical',3,'study','Directly helpful.'],['Ask teachers for one revision period a week.','Collaborative',2,'study','Good idea, but it\u2019s the teachers\u2019 decision.'],['Cancel tests!','Ambitious',0,null,'A class president can\u2019t cancel tests.'],['Share my notes. My handwriting is a puzzle game.','Humorous',2,'study','Kind and funny.']]]];
+function startTerm(){const T=termOf();
+ if(SOC.pres){const P=SOC.pres;let kept=0,broke=0;P.pro.forEach(p=>{const d=PI(p.id);const ok=p.prog>=d.goal;ok?kept++:broke++;voters().forEach(n=>{if(PEOPLE[n]&&vPri(n).includes(d.tag))bond(n,ok?3:-2);});});SOC.hist.kept+=kept;SOC.hist.broke+=broke;
+  feedPost('School',`Term ${T-1} report: our class president kept ${kept} of ${P.pro.length} promises.`);addMem('End of presidency','Your class',`Kept ${kept} of ${P.pro.length} promises.`,'#55745c');SOC.pres=null;}
+ const gf={};GEN.forEach(n=>gf[n]=6+hsh(n+T)%9);SOC.el={term:T,reg:false,slogan:null,col:null,pro:[],exp:{},gf,learn:{},vols:[],prep:0,posters:0,deb:null,myVote:null,res:null,asked:{}};
+ SOC.prom={term:T,partner:null,mode:null,asked:{},think:null,decor:0,practice:0,night:null,done:false,group:hsh('g'+T)%2?'Zainab':'Funmi'};
+ feedPost('School',`Term ${T}: Class president registration is open today and tomorrow. Debate on Day 3, voting on Day 4.`);feedPost('School','Prom Night is on Day 7! Dress code: formal or smart. Going with friends or alone is totally fine.');}
+function newDay(){SOC.day++;SOC.pt=0;SOC.ap=3;SOC.did={};const d=dOf();if(d===1)startTerm();const E=SOC.el,PR=SOC.prom;
+ if(E&&d<=3){Object.entries(RIV).forEach(([n,r])=>feedPost(n,`Vote ${n} for class president! \u201c${r.slogan}\u201d`));if(E.reg)E.vols.forEach(v=>voters().forEach(n=>{if(vPri(n).includes(vPri(v)[0]))E.exp[n]=(E.exp[n]||0)+0.5;}));}
+ if(E&&d===2&&E.reg)msg('Amaka','I heard you\u2019re running too. May the best plan win! What\u2019s your main promise?',[[`It\u2019s ${PI(E.pro[0]).n}`,'ev','elRespect'],['You\u2019ll see at the debate.','ev','elCoy']]);
+ if(E&&d===3)msg('Halima','The debate is today. Have you prepared your speech?',[['I\u2019ve been practising','ev','okay'],['I\u2019ll wing it','ev','okay']]);
+ if(d===4&&E&&E.res==null)toast('It\u2019s voting day! Open School life to vote.');
+ if(PR&&d===5){feedPost('School','Prom committee needs volunteers to decorate the hall. Two days to go!');const cands=Object.keys(PEOPLE).filter(n=>n!==PR.partner).sort((a,b)=>rel(b).f-rel(a).f);const n=cands[0];
+  if(n&&rel(n).f>=15&&!PR.partner)msg(n,'Prom is on Day 7! Do you want to go together?',[['Yes, let\u2019s go together','ev','promYes'],['Let\u2019s go as friends','ev','promFr'],['Sorry, I\u2019ve got plans','ev','promNo']]);
+  else msg(PR.group,'Prom is in 2 days! Have you decided what you\u2019re wearing?',[['Already sorted','ev','okay'],['Help, I need ideas!','ev','fashionHelp']]);}
+ if(PR&&PR.think&&d>=5){const n=PR.think;PR.think=null;const yes=rel(n).f>=12||hsh(n+SOC.day)%2===0;if(yes&&!PR.partner){PR.partner=n;PR.mode='friends';msg(n,'I thought about it. Yes, let\u2019s go to prom together, as friends!',[['Yay!','okay']]);}else msg(n,'Sorry, I\u2019m going with my group. See you there though!',[['No wahala','okay']]);}
+ if(PR&&PR.done&&d===1){}
+ if(PR&&PR.night&&!PR.after){PR.after=1;const n=PR.partner;if(n)msg(n,'Thanks for yesterday. Prom was so much fun. We should do that again next term!',[['Definitely!','ev','bond2']]);msg('Chidi',PR.night.dance>=70?'Your dancing yesterday? Legendary. The whole hall was shouting.':'That dance competition was hilarious. You tried sha!',[['Haha thanks','okay']]);}
+ if(SOC.pres)presDay(d);save();big('DAY '+d);toast(`Day ${d} of term ${termOf()}: ${CAL[d-1][1]}`);}
+// replies on event messages
+const EVR={okay:()=> 'Okay!',bond2:n=>{bond(n,2);return 'Next term, then!';},elRespect:n=>{bond(n,2,'Respectful election rival');return 'Good idea. Let\u2019s keep it friendly.';},elCoy:n=>'Ooh, mysterious. See you there.',
+ fashionHelp:n=>{setTimeout(()=>{closePhone();showWardrobe('shop');},500);return 'Go to Mama Bisi\u2019s boutique. Ankara gown or senator suit. You can\u2019t go wrong!';},
+ promYes:n=>{const P=SOC.prom;P.partner=n;P.mode='date';bond(n,4,'Agreed to go to prom together');return 'Yay! It\u2019s a plan.';},promFr:n=>{const P=SOC.prom;P.partner=n;P.mode='friends';bond(n,3,'Going to prom as friends');return 'Friends it is! This will be fun.';},promNo:n=>{bond(n,0);return 'Okay, no wahala. See you there!';},
+ sugOk:n=>{presProg('sugg');bond(n,2,'You took their suggestion seriously');return 'Thank you! You actually listen.';},sugNo:n=>{presProg('sugg');bond(n,1);return 'Okay, at least you explained. Fair enough.';},
+ dispMed:n=>{presProg('dispute');['Tunde','Emeka'].forEach(x=>bond(x,1,'You settled their argument fairly'));return 'Wow, they shook hands. Good job, President.';},dispTake:n=>{bond('Tunde',2);bond('Emeka',-3,'You took sides against them');return 'Emeka is not happy with you o.';}};
+{const _rm=replyMsg;replyMsg=function(id,i){const m=(SV.msgs||[]).find(x=>x.id===id);if(m&&m.ans==null&&m.opts[i]&&m.opts[i][1]==='ev'){m.ans=i;const f=EVR[m.opts[i][2]];m.back=f?f(m.from):'';save();openApp('thread',m.from);return;}return _rm(id,i);};}
+// ---------- events hub ----------
+function showEvents(){const d=dOf(),E=SOC.el,PR=SOC.prom;const strip=CAL.map(([k,t])=>`<div style="flex:1;min-width:0;text-align:center;padding:4px 2px;border:2px solid #3a2a30;border-radius:8px;background:${k===d?'#e3a347':k<d?'#e0cfae':'#fffdf6'};font-size:10px;line-height:1.1;"><b style="font-size:13px;">${k}</b><br>${t.split(' ')[0]}</div>`).join('');
+ const cards=[];const card=(g,t,s,btn,id,c)=>cards.push(`<div class="opt" style="cursor:default;"><span class="glyph" style="${c?`background:${c};color:#fff;`:''}">${g}</span><div style="flex:1;"><b>${t}</b><small>${s}</small></div>${btn?`<button class="btn pri" data-go="${id}" style="font-size:15px;padding:3px 10px;">${btn}</button>`:''}</div>`);
+ if(SOC.pres)card('★','President\u2019s desk',`${SOC.pres.pro.filter(p=>p.prog>=PI(p.id).goal).length} of ${SOC.pres.pro.length} promises done`,'Open','desk','#a8553f');
+ if(E&&d<=2)card('✎','Class president election',E.reg?`You\u2019re a candidate · ${SOC.ap} campaign actions left today`:`Registration open until end of Day 2 · requires level 2 (you: ${SV.lvl})`,E.reg?'Campaign HQ':'Register',E.reg?'hq':'reg');
+ if(E&&d===3)card('◆','Candidates\u2019 debate',E.deb?`Done: you scored ${E.deb.you.toFixed(1)}`:E.reg?'Answer 3 questions from the moderator':'Watch Amaka and Tunde debate',E.deb?null:E.reg?'Take the stage':'Watch','debate');
+ if(E&&E.reg&&d===3)card('✎','Campaign HQ',`${SOC.ap} actions left today`,'Open','hq');
+ if(E&&d===4)card('▣','Voting day',E.res?`${E.res.winner==='You'?'You won!':E.res.winner+' won'} · ${E.res.tally[E.res.winner]} votes`:'Cast your ballot, then watch the count',E.res?'Results':'Vote','vote');
+ if(E&&E.res&&d>4)card('▣','Election results',`${E.res.winner==='You'?'You':'E.res.winner'} won this term`.replace('E.res.winner',E.res.winner),'View','vote');
+ if(PR&&d>=5&&d<=6)card('♪','Prom preparation',`${PR.partner?`Going with ${PR.partner}${PR.mode==='friends'?' (as friends)':''}`:'Going solo or with friends is fine'} · outfit: ${isFormal()?'formal ✓':'not formal yet'}`,'Prepare','prep','#6b4a7a');
+ if(PR&&d===7)card('♪','Prom Night',PR.night?`You attended · ${PR.night.awards.length} award${PR.night.awards.length===1?'':'s'}`:'The hall is decorated. Music is playing.',PR.night?null:'Go to Prom','prom','#6b4a7a');
+ if(PR&&d<5)card('♪','Prom Night',`On Day 7 · ${7-d} day${7-d>1?'s':''} to go`,null,'', '#6b4a7a');
+ openSheet(`<div class="row" style="justify-content:space-between;"><span class="hand" style="font-size:32px;line-height:1;">School life</span><span class="tag">Term ${termOf()} · Day ${d}</span></div>
+  <div style="display:flex;gap:4px;">${strip}</div>${cards.join('')}
+  <div class="row" style="flex-wrap:wrap;gap:6px;"><button class="btn" id="wd">Wardrobe</button><button class="btn" id="sb">Scrapbook</button><button class="btn" id="nd">Go home · next school day ▸</button><button class="btn" id="ok">Close</button></div>
+  <div style="font-size:11px;opacity:.7;">A school day also passes after 8 minutes on campus.</div>`,b=>{b.querySelector('#ok').onclick=closeSheet;b.querySelector('#wd').onclick=()=>showWardrobe();b.querySelector('#sb').onclick=showBook;
+  b.querySelector('#nd').onclick=()=>{if(dOf()===4&&SOC.el&&!SOC.el.res){toast('Vote first! (Or skip: the count will run without you.)');SOC.el.skip=(SOC.el.skip||0)+1;if(SOC.el.skip<2)return;countVotes(null,true);}newDay();showEvents();};
+  b.querySelectorAll('[data-go]').forEach(e=>e.onclick=()=>({desk:showDesk,hq:showHQ,reg:showReg,debate:showDebate,vote:showVote,prep:showPrep,prom:startProm}[e.dataset.go]||(()=>{}))());});}
+function showBook(){const M=SOC.mem;openSheet(`<div class="hand" style="font-size:32px;line-height:1;">Scrapbook</div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;">${M.map(m=>`<div style="background:#fffdf6;border:2.5px solid #3a2a30;border-radius:6px;padding:8px;transform:rotate(${(hsh(m.t+m.day)%5-2)*0.8}deg);box-shadow:0 3px 0 #3a2a30;"><div style="height:46px;border-radius:4px;background:${m.col};margin-bottom:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Patrick Hand',cursive;font-size:20px;">${m.t}</div><div style="font-size:12px;line-height:1.3;">${m.txt}</div><div style="font-size:10px;opacity:.65;margin-top:4px;">Term ${m.term} · Day ${((m.day-1)%7)+1}${m.who?' · '+m.who:''}</div></div>`).join('')||'<div style="font-size:13px;">No memories yet. Big moments (elections, prom, awards) land here.</div>'}</div><button class="btn" id="ok">Close</button>`,b=>b.querySelector('#ok').onclick=closeSheet);}
+// ---------- election flow ----------
+function showReg(){const E=SOC.el;if(dOf()>2)return toast('Registration has closed for this term.');if(SV.lvl<2)return openSheet(`<div class="hand" style="font-size:28px;">Not eligible yet</div><div style="font-size:14px;">Candidates need to be level 2 or above. You\u2019re level ${SV.lvl}: play a few games or lessons and come back before the end of Day 2.</div><button class="btn" id="ok">Okay</button>`,b=>b.querySelector('#ok').onclick=showEvents);
+ const st={slogan:E.slogan||SLOGANS[0],col:E.col||CCOL[0],pro:E.pro.slice()};
+ const paint=()=>openSheet(`<div class="hand" style="font-size:30px;line-height:1;">Run for class president</div><div style="font-size:13px;">Rules: one candidate per student, register by end of Day 2, and promises must be things a class president can actually do.</div>
+  <div style="font-size:12px;font-weight:700;">SLOGAN</div><div class="row" style="flex-wrap:wrap;gap:5px;">${SLOGANS.map(s=>`<button class="btn" data-sl="${s}" style="font-size:14px;padding:3px 9px;${st.slogan===s?'background:#e3a347;':''}">${s}</button>`).join('')}</div>
+  <div style="font-size:12px;font-weight:700;">CAMPAIGN COLOUR</div><div class="row" style="gap:6px;">${CCOL.map(c=>`<button data-cc="${c}" style="width:34px;height:34px;border-radius:50%;background:${c};border:${st.col===c?'4px':'2px'} solid #3a2a30;cursor:pointer;"></button>`).join('')}</div>
+  <div style="font-size:12px;font-weight:700;">PICK UP TO 3 PROMISES (${st.pro.length}/3)</div>${PROMS.map(p=>`<button class="opt" data-pr="${p.id}" style="${st.pro.includes(p.id)?'background:#fff3c4;':''}"><span class="glyph">${st.pro.includes(p.id)?'✓':''}</span><div style="flex:1;text-align:left;"><b>${p.n}</b><small>Good for ${TAGN[p.tag]} · ${p.ben} · Limit: ${p.lim}</small></div></button>`).join('')}
+  <div style="background:${st.col};color:#fff;border:2.5px solid #3a2a30;border-radius:8px;padding:10px;text-align:center;"><div class="hand" style="font-size:26px;line-height:1;">VOTE YOU</div><div style="font-size:13px;">${st.slogan}</div></div>
+  <div class="row" style="gap:6px;"><button class="btn pri" id="go" style="flex:1;" ${st.pro.length?'':'disabled'}>Register</button><button class="btn" id="bk">Back</button></div>`,b=>{
+  b.querySelector('#bk').onclick=showEvents;b.querySelectorAll('[data-sl]').forEach(e=>e.onclick=()=>{st.slogan=e.dataset.sl;paint();});b.querySelectorAll('[data-cc]').forEach(e=>e.onclick=()=>{st.col=e.dataset.cc;paint();});
+  b.querySelectorAll('[data-pr]').forEach(e=>e.onclick=()=>{const id=e.dataset.pr,i=st.pro.indexOf(id);if(i>=0)st.pro.splice(i,1);else if(st.pro.length<3)st.pro.push(id);paint();});
+  b.querySelector('#go').onclick=()=>{Object.assign(E,st,{reg:true});save();sfx('level');feedPost('You',`I\u2019m running for class president! \u201c${st.slogan}\u201d My promises: ${st.pro.map(p=>PI(p).n).join(', ')}.`);addMem('Candidate!','',`Registered for class president: \u201c${st.slogan}\u201d`,st.col);showHQ();};});paint();}
+function scoreV(n,c){const E=SOC.el,R=RIV[c];const pri=vPri(n);const pro=c==='You'?E.pro:R.pro;
+ const fr=c==='You'?(PEOPLE[n]?rel(n).f:E.gf[n]||8):(R.fans[n]||8);const plat=pro.filter(p=>pri.includes(PI(p).tag)).length*12;
+ const deb=E.deb?(E.deb[c==='You'?'you':c]||0)*1.6+(c==='You'?(E.deb.tagB[n]||0):0):0;const exp=c==='You'?Math.min(12,(E.exp[n]||0)*4):6;const trust=c==='You'?SOC.hist.kept*4-SOC.hist.broke*5:0;const noise=hsh(n+c+E.term)%7;
+ return {fr:fr*0.5,plat,deb,exp,trust,noise,t:fr*0.5+plat+deb+exp+trust+noise};}
+const cands=()=>[...(SOC.el.reg?['You']:[]),...Object.keys(RIV)];
+function poll(){const t={};cands().forEach(c=>t[c]=0);let ab=0;voters().forEach(n=>{let b=null,bs=-1;cands().forEach(c=>{const s=scoreV(n,c).t;if(s>bs){bs=s;b=c;}});if(bs<18)ab++;else t[b]++;});return{t,ab};}
+function showHQ(){const E=SOC.el;if(!E.reg)return showReg();const vs=voters();const p=E.vols.length?poll():null;
+ const vRow=n=>`<button class="btn" data-tk="${n}" style="font-size:13px;padding:2px 7px;">${n}${E.learn[n]?' · '+vPri(n).map(t=>TAGN[t]).join(' & '):''}</button>`;
+ const canVol=Object.keys(PEOPLE).filter(n=>!RIV[n]&&!E.vols.includes(n)&&rel(n).f>=25);
+ openSheet(`<div class="row" style="justify-content:space-between;"><span class="hand" style="font-size:30px;line-height:1;">Campaign HQ</span><span class="tag">${SOC.ap} action${SOC.ap===1?'':'s'} left today</span></div>
+  <div style="background:${E.col};color:#fff;border:2px solid #3a2a30;border-radius:8px;padding:6px 10px;font-size:13px;"><b>${E.slogan}</b> · ${E.pro.map(x=>PI(x).n).join(' · ')}</div>
+  ${p?`<div style="font-size:13px;"><b>Volunteer poll:</b> ${Object.entries(p.t).map(([c,v])=>`${c} ${v}`).join(' · ')} · undecided ${p.ab}</div>`:'<div style="font-size:12px;opacity:.75;">Recruit a volunteer to get a daily poll.</div>'}
+  <div style="font-size:12px;font-weight:700;">TALK TO A CLASSMATE (learn what they care about, 1 action)</div><div class="row" style="flex-wrap:wrap;gap:4px;">${vs.map(vRow).join('')}</div>
+  <button class="opt" data-a="poster"><span class="glyph">▤</span><div style="flex:1;text-align:left;"><b>Put up posters · ₦20</b><small>Seen by the whole class · ${2-E.posters} allowed left</small></div></button>
+  <button class="opt" data-a="practice"><span class="glyph">✎</span><div style="flex:1;text-align:left;"><b>Practise your debate speech</b><small>Helps on Day 3 · practised ${E.prep}/3</small></div></button>
+  <div style="font-size:12px;font-weight:700;">RECRUIT A VOLUNTEER (needs Friend level)</div><div class="row" style="flex-wrap:wrap;gap:4px;">${canVol.map(n=>`<button class="btn" data-vo="${n}" style="font-size:13px;padding:2px 8px;">${n}</button>`).join('')||'<small>No friends available yet. Volunteers so far: '+(E.vols.join(', ')||'none')+'</small>'}</div>
+  <div class="row" style="gap:6px;"><button class="btn" id="bk">Back</button></div>`,b=>{b.querySelector('#bk').onclick=showEvents;const use=()=>{if(SOC.ap<=0){toast('No actions left today. Come back tomorrow.');return false;}SOC.ap--;return true;};
+  b.querySelectorAll('[data-tk]').forEach(e=>e.onclick=()=>{const n=e.dataset.tk;if(!use())return;E.learn[n]=1;E.exp[n]=(E.exp[n]||0)+1;const pri=vPri(n),hit=E.pro.filter(x=>pri.includes(PI(x).tag));if(PEOPLE[n])bond(n,hit.length?2:1);else if(hit.length)E.gf[n]+=3;
+   toast(`${n}: "I care about ${pri.map(t=>TAGN[t]).join(' and ')}. ${hit.length?`Your ${PI(hit[0]).n} idea? I like it.`:'Your promises don\u2019t really talk to me.'}"`);save();showHQ();});
+  b.querySelector('[data-a=poster]').onclick=()=>{if(E.posters>=2)return toast('The noticeboard is full of your posters already.');if(SV.bank<20)return toast('Not enough money for posters.');if(!use())return;addBank(-20);E.posters++;voters().forEach(n=>E.exp[n]=(E.exp[n]||0)+0.6);sfx('coin');feedPost('You',`New campaign posters up by the noticeboard! \u201c${E.slogan}\u201d`);save();showHQ();};
+  b.querySelector('[data-a=practice]').onclick=()=>{if(E.prep>=3)return toast('You know your speech by heart.');if(!use())return;E.prep++;sfx('power');toast('You practise in front of the mirror. Smoother!');save();showHQ();};
+  b.querySelectorAll('[data-vo]').forEach(e=>e.onclick=()=>{const n=e.dataset.vo;if(!use())return;const ok=E.pro.some(x=>vPri(n).includes(PI(x).tag))||rel(n).f>=50;if(ok){E.vols.push(n);bond(n,2,'Volunteered on your campaign');toast(`${n}: "I\u2019m in. I\u2019ll talk to people for you."`);}else toast(`${n}: "I like you, but I\u2019m not sure about your promises. Sorry."`);save();showHQ();});});}
+function showDebate(){const E=SOC.el;if(E.deb)return showEvents();const qs=DEBQ.slice().sort((a,b)=>hsh(a[0]+E.term)-hsh(b[0]+E.term)).slice(0,3);let qi=0,you=E.reg?Math.min(1.5,E.prep*0.5):0;const tagB={};const R={};Object.keys(RIV).forEach(r=>R[r]=0);const log=[];
+ const ask=()=>{if(qi>=qs.length)return fin();const [q,opts]=qs[qi];const rivA=Object.keys(RIV).map(r=>{const o=opts.slice().sort((a,b)=>Math.abs(a[2]-RIV[r].q)-Math.abs(b[2]-RIV[r].q))[hsh(r+q)%2];R[r]+=o[2]+((hsh(r+q+1)%10)-5)/10;return [r,o];});
+  if(!E.reg){rivA.forEach(([r,o])=>log.push(`<b>${r}:</b> "${o[0]}"`));qi++;return ask();}
+  openSheet(`<div style="font-size:12px;font-weight:700;">CANDIDATES\u2019 DEBATE · QUESTION ${qi+1} OF 3 · moderator Mr. Lawal</div><div class="hand" style="font-size:24px;line-height:1.15;">"${q}"</div>
+   ${rivA.map(([r,o])=>`<div style="font-size:13px;"><b style="color:${RIV[r].col}">${r}:</b> "${o[0]}"</div>`).join('')}<div style="font-size:12px;font-weight:700;margin-top:4px;">YOUR ANSWER</div>
+   ${opts.map((o,i)=>`<button class="opt" data-o="${i}"><span class="glyph" style="font-size:11px;">${o[1].slice(0,4)}</span><div style="flex:1;text-align:left;"><b style="font-weight:400;">${o[0]}</b></div></button>`).join('')}`,b=>b.querySelectorAll('[data-o]').forEach(e=>e.onclick=()=>{const o=opts[+e.dataset.o];you+=o[2];if(o[3])voters().forEach(n=>{if(vPri(n).includes(o[3]))tagB[n]=(tagB[n]||0)+4;});
+    sfx(o[2]>=3?'power':o[2]>=2?'coin':'thud');openSheet(`<div class="hand" style="font-size:26px;">${o[2]>=3?'The class nods.':o[2]>=2?'Some laughs, some nods.':'Murmurs in the hall\u2026'}</div><div style="font-size:14px;"><b>${o[1]} answer:</b> ${o[4]}${o[3]?` Voters who care about ${TAGN[o[3]]} noticed.`:''}</div><button class="btn pri" id="n">${qi<2?'Next question':'Closing'}</button>`,x=>x.querySelector('#n').onclick=()=>{qi++;ask();});}));};
+ const fin=()=>{E.deb={you,tagB,...R};save();const all=[...(E.reg?[['You',you]]:[]),...Object.entries(R)].sort((a,b)=>b[1]-a[1]);feedPost('School',`Debate night! The class thought ${all[0][0]==='You'?'you':all[0][0]} gave the strongest answers.`);if(E.reg)addMem('The debate','Amaka, Tunde',`Ranked ${all.findIndex(a=>a[0]==='You')+1} of ${all.length} in the candidates\u2019 debate.`,'#4f6e8a');
+  openSheet(`<div class="hand" style="font-size:30px;line-height:1;">Debate results</div>${all.map(([c,s],k)=>`<div class="row" style="justify-content:space-between;font-weight:700;"><span>${k+1}. ${c}</span><span>${s.toFixed(1)} / 9</span></div>`).join('')}${log.length?`<div style="font-size:12px;">${log.join('<br>')}</div>`:''}<div style="font-size:13px;">Scores reward answers that are relevant, realistic and clear. Long or flashy answers don\u2019t win on their own.</div><button class="btn pri" id="ok">Done</button>`,b=>b.querySelector('#ok').onclick=showEvents);};ask();}
+function countVotes(my,silent){const E=SOC.el;if(E.res)return;const t={};cands().forEach(c=>t[c]=0);let ab=0;const why=[];const ballots=[];
+ voters().forEach(n=>{let b=null,bs=-1,br=null;cands().forEach(c=>{const s=scoreV(n,c);if(s.t>bs){bs=s.t;b=c;br=s;}});if(bs<18){ab++;ballots.push([n,null]);}else{t[b]++;ballots.push([n,b,br]);}});
+ if(my){t[my]++;ballots.unshift(['You',my]);}const winner=Object.entries(t).sort((a,b)=>b[1]-a[1]||(a[0]==='You'?1:-1))[0][0];E.res={tally:t,ab,winner,ballots};E.myVote=my;save();
+ if(winner==='You'){SOC.pres={term:E.term,pro:E.pro.map(id=>({id,prog:0,base:{games:SOC.cnt.games,matches:SOC.cnt.matches}}))};feedPost('School',`Congratulations to our new class president: YOU! \u201c${E.slogan}\u201d`);addMem('Class President!','Your class',`Won the election with ${t.You} votes.`,E.col);addXP(80);}
+ else{feedPost('School',`${winner} is our new class president with ${t[winner]} votes. \u201c${RIV[winner].slogan}\u201d`);if(E.reg)addMem('Election night','Amaka, Tunde',`Ran for president and got ${t.You||0} votes. ${winner} won.`,'#6b4a7a');}
+ if(!silent)showVote();}
+function showVote(){const E=SOC.el;if(!E.res){openSheet(`<div class="hand" style="font-size:30px;line-height:1;">Ballot</div><div style="font-size:13px;">One vote each. Once it\u2019s in the box, it can\u2019t be changed.</div>${cands().map(c=>{const col=c==='You'?E.col:RIV[c].col,sl=c==='You'?E.slogan:RIV[c].slogan;return `<button class="opt" data-v="${c}"><span class="glyph" style="background:${col};color:#fff;">${c[0]}</span><div style="flex:1;text-align:left;"><b>${c==='You'?'You':c}</b><small>\u201c${sl}\u201d</small></div></button>`;}).join('')}<button class="btn" id="ab">Abstain</button>`,b=>{
+  b.querySelectorAll('[data-v]').forEach(e=>e.onclick=()=>{sfx('coin');countVotes(e.dataset.v);});b.querySelector('#ab').onclick=()=>countVotes(null);});return;}
+ const R=E.res,tot=Object.values(R.tally).reduce((a,b)=>a+b,0)||1;const named=R.ballots.filter(b=>PEOPLE[b[0]]&&b[0]!=='You');
+ const reason=b=>{if(!b[1])return 'abstained';const s=b[2];if(!s)return 'voted '+b[1];const k=Object.entries({friendship:s.fr,platform:s.plat,debate:s.deb,campaigning:s.exp}).sort((a,c)=>c[1]-a[1])[0][0];return `${b[1]==='You'?'you':b[1]} (mostly ${k})`;};
+ openSheet(`<div class="hand" style="font-size:20px;color:#a8553f;">Election results · Term ${E.term}</div><div class="hand" style="font-size:40px;line-height:.9;">${R.winner==='You'?'YOU WIN!':R.winner+' wins'}</div>
+  ${Object.entries(R.tally).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div><div class="row" style="justify-content:space-between;font-weight:700;font-size:14px;"><span>${c}</span><span>${v} vote${v===1?'':'s'}</span></div><div class="qbar" style="height:12px;"><div style="width:${v/tot*100}%;background:${c==='You'?E.col:RIV[c].col}"></div></div></div>`).join('')}<div style="font-size:12px;">Abstained: ${R.ab}${E.myVote!==undefined?` · your vote: ${E.myVote||'abstained'}`:''}</div>
+  <div style="font-size:12px;line-height:1.5;"><b>How your friends voted:</b> ${named.map(b=>`${b[0]} → ${reason(b)}`).join(' · ')}</div>
+  ${R.winner!=='You'&&E.reg&&!E.congr?`<div class="row" style="gap:6px;flex-wrap:wrap;"><button class="btn pri" id="cg">Congratulate ${R.winner}</button><button class="btn" id="rc">Demand a recount</button></div>`:''}
+  ${R.winner==='You'?'<div style="font-size:13px;">Your presidency is open on the President\u2019s desk. Keep your promises before the term ends.</div>':''}<button class="btn" id="ok">Close</button>`,b=>{b.querySelector('#ok').onclick=showEvents;
+  const cg=b.querySelector('#cg');if(cg){cg.onclick=()=>{E.congr=1;bond(R.winner,4,'You congratulated them on winning');feedPost(R.winner,'Thank you to everyone who voted, and to my rivals for a fair race. Special thanks to you for the kind words.');save();showVote();};b.querySelector('#rc').onclick=()=>{E.congr=1;bond(R.winner,-3,'You demanded a recount');toast('Mr. Lawal recounts: same result. The class thinks that was a bit sour.');save();showVote();};}});}
+// ---------- presidency ----------
+function presProg(k,n=1){const P=SOC.pres;if(!P)return;P.pro.forEach(p=>{const d=PI(p.id);if(d.k===k&&p.prog<d.goal){p.prog=Math.min(d.goal,p.prog+n);if(p.prog>=d.goal){toast(`Promise kept: ${d.n}!`);sfx('level');feedPost('School',`Class president update: \u201c${d.n}\u201d is done!`);voters().forEach(v=>{if(PEOPLE[v]&&vPri(v).includes(d.tag))bond(v,2,`You kept your promise: ${d.n}`);});addMem('Promise kept','',d.n,'#55745c');}}});save();}
+function presDay(d){const P=SOC.pres;P.pro.forEach(p=>{const D=PI(p.id);if(D.k==='games')p.prog=Math.min(D.goal,SOC.cnt.games-p.base.games);if(D.k==='matches')p.prog=Math.min(D.goal,SOC.cnt.matches-p.base.matches);});
+ const has=k=>P.pro.some(p=>PI(p.id).k===k&&p.prog<PI(p.id).goal);const ns=Object.keys(PEOPLE);
+ if(has('sugg')){const n=ns[SOC.day%ns.length];const S=['Can we have five minutes of music before the first lesson?','Can the class vote on where we sit for group work?','Can we open the windows during afternoon lessons?','Can we have a class quiz every Friday?'];msg(n,`Suggestion for the box: ${S[SOC.day%S.length]}`,[['Good idea, I\u2019ll raise it','ev','sugOk'],['Explain why it\u2019s not possible','ev','sugNo']]);}
+ if(has('dispute')&&SOC.day%2===0)msg('Chidi','President! Tunde and Emeka are arguing about whose turn it is to lead the group project. Help!',[['Talk to both and split the work fairly','ev','dispMed'],['Tunde is right','ev','dispTake'],['Not my problem','ev','okay']]);}
+function showDesk(){const P=SOC.pres;if(!P)return showEvents();
+ const row=p=>{const d=PI(p.id),done=p.prog>=d.goal;let act='';
+  if(!done&&(d.k==='remind'||d.k==='news'))act=SOC.did[d.k]?'<small>Done for today</small>':`<button class="btn" data-k="${d.k}" style="font-size:13px;padding:2px 8px;">${d.k==='remind'?'Post reminder':'Post update'}</button>`;
+  if(!done&&d.k==='approve')act=SOC.did.approve?'<small>Try again tomorrow</small>':'<button class="btn" data-k="approve" style="font-size:13px;padding:2px 8px;">Propose to Mr. Adeyemi</button>';
+  if(!done&&d.k==='perf')act=`<div class="row" style="gap:4px;flex-wrap:wrap;">${['Zainab','Funmi','Chidi','Amaka'].filter(n=>!(P.perf||[]).includes(n)&&!(P.no||[]).includes(n)).map(n=>`<button class="btn" data-pf="${n}" style="font-size:12px;padding:2px 6px;">Ask ${n}</button>`).join('')}</div>`;
+  if(!done&&(d.k==='sugg'||d.k==='dispute'))act='<small>Answer in Messages when classmates text you</small>';if(!done&&(d.k==='games'||d.k==='matches'))act='<small>Happens when you play</small>';
+  return `<div class="opt" style="cursor:default;flex-wrap:wrap;"><span class="glyph" style="${done?'background:#55745c;color:#fff;':''}">${done?'✓':p.prog}</span><div style="flex:1;min-width:140px;"><b>${d.n}</b><small>${d.task} · ${p.prog}/${d.goal}</small></div>${act}</div>`;};
+ openSheet(`<div class="hand" style="font-size:30px;line-height:1;">President\u2019s desk</div><div style="font-size:13px;">Promises you made. Voters who cared about them remember what you do before the term ends.</div>${P.pro.map(row).join('')}<button class="btn" id="bk">Back</button>`,b=>{b.querySelector('#bk').onclick=showEvents;
+  b.querySelectorAll('[data-k]').forEach(e=>e.onclick=()=>{const k=e.dataset.k;SOC.did[k]=1;if(k==='remind'){feedPost('You','Reminder: maths homework is due tomorrow. Page 42, questions 1 to 10.');presProg('remind');}if(k==='news'){feedPost('You',`Class news: ${['the inter-house fixtures are out','our debate team needs one more speaker','the library has new comics'][SOC.day%3]}!`);presProg('news');}
+   if(k==='approve'){const r=hsh('ap'+SOC.day)%10;if(r<5){toast('Mr. Adeyemi: "Approved. Use the back shelf."');presProg('approve');}else if(r<8){toast('Mr. Adeyemi: "Approved, but only during free periods."');presProg('approve');}else toast('Mr. Adeyemi: "Not this week, exams are close. Ask me again tomorrow."');}save();showDesk();});
+  b.querySelectorAll('[data-pf]').forEach(e=>e.onclick=()=>{const n=e.dataset.pf;const ok=rel(n).f>=10||hsh(n+SOC.day)%3>0;if(ok){(P.perf=P.perf||[]).push(n);bond(n,2,'Signed up for your talent showcase');toast(`${n}: "Count me in!"`);presProg('perf');}else{(P.no=P.no||[]).push(n);toast(`${n}: "Stage fright. Sorry!"`);}save();showDesk();});});}
+// ---------- prom ----------
+function showPrep(){const PR=SOC.prom,d=dOf();const cand=Object.keys(PEOPLE).filter(n=>n!==PR.partner&&!PR.asked[n]);
+ openSheet(`<div class="hand" style="font-size:30px;line-height:1;">Prom preparation</div>
+  <div class="opt" style="cursor:default;"><span class="glyph">${isFormal()?'✓':'!'}</span><div style="flex:1;"><b>Outfit</b><small>${isFormal()?'You\u2019re in formalwear. Looking sharp.':'No formal outfit yet: you\u2019ll show up in your school uniform. Pick one from the Prom catalogue.'}</small></div><button class="btn pri" id="wd" style="font-size:14px;padding:2px 9px;">Prom catalogue</button></div>
+  <div class="opt" style="cursor:default;"><span class="glyph">♥</span><div style="flex:1;"><b>Going with</b><small>${PR.partner?`${PR.partner}${PR.mode==='friends'?' (as friends)':PR.mode==='group'?' and their group':''}`:'Nobody yet. Going solo is fine too.'}${PR.think?` · ${PR.think} is still deciding`:''}</small></div></div>
+  ${!PR.partner?`<div style="font-size:12px;font-weight:700;">ASK SOMEONE (once each)</div>${cand.map(n=>`<div class="row" style="gap:5px;flex-wrap:wrap;"><span style="min-width:62px;font-weight:700;font-size:13px;">${n}</span><span class="tag">${tierOf(rel(n).f)[1]}</span><button class="btn" data-ask="${n},friends" style="font-size:13px;padding:2px 8px;">As friends?</button><button class="btn" data-ask="${n},date" style="font-size:13px;padding:2px 8px;">As my date?</button></div>`).join('')}`:''}
+  <button class="opt" id="dec" ${SOC.did.decor?'disabled':''}><span class="glyph">✿</span><div style="flex:1;text-align:left;"><b>Help decorate the hall</b><small>${SOC.did.decor?'Done today':'Once a day · decorations so far: '+PR.decor}</small></div></button>
+  <button class="opt" id="dp"><span class="glyph">♪</span><div style="flex:1;text-align:left;"><b>Practise dancing</b><small>Best practice: ${PR.practice}%</small></div></button><button class="btn" id="bk">Back</button>`,b=>{
+  b.querySelector('#bk').onclick=showEvents;b.querySelector('#wd').onclick=()=>showWardrobe(isFormal()?'mine':'prom');b.querySelector('#dp').onclick=()=>danceGame('Dance practice',20,p=>{PR.practice=Math.max(PR.practice,p);save();showPrep();});
+  b.querySelector('#dec').onclick=()=>{if(SOC.did.decor)return;SOC.did.decor=1;PR.decor++;['Zainab','Funmi'].forEach(n=>bond(n,1,'Decorated the prom hall together'));sfx('power');toast('You hang fairy lights and gold balloons with Zainab and Funmi.');save();showPrep();};
+  b.querySelectorAll('[data-ask]').forEach(e=>e.onclick=()=>{const [n,m]=e.dataset.ask.split(',');PR.asked[n]=1;const f=rel(n).f,r=(hsh(n+PR.term+m)%100)/100;let out;
+   if(r<0.12&&!PR.think){PR.think=n;out=`${n}: "Can I think about it? I\u2019ll text you."`;}
+   else if(m==='date'){if(f>=40&&r<0.25+f/110){PR.partner=n;PR.mode='date';bond(n,4,'Going to prom together');out=`${n}: "Yes! I\u2019d love to."`;}else if(r<0.55+f/150){PR.partner=n;PR.mode='friends';bond(n,2,'Going to prom as friends');out=`${n}: "How about we go as friends? That would be fun."`;}else out=`${n}: "That\u2019s sweet, but I\u2019m going with my group. See you there!"`;}
+   else{if(n===PR.group||n==='Zainab'&&PR.group==='Funmi'){PR.partner=n;PR.mode='group';bond(n,2);out=`${n}: "I\u2019m going with the ${SV.gender==='girl'?'girls':'squad'}. Come with us!"`;}else if(r<0.45+f/100){PR.partner=n;PR.mode='friends';bond(n,3,'Going to prom as friends');out=`${n}: "Yes! Friends squad!"`;}else out=`${n}: "I already said I\u2019d go with someone else. Sorry!"`;}
+   toast(out);save();showPrep();});});}
+function danceGame(label,dur,done){const LN=['←','↓','↑','→'],KEYS={arrowleft:0,a:0,arrowdown:1,s:1,arrowup:2,w:2,arrowright:3,d:3};let notes=[],t0=0,next=0.8,sc=0,tot=0,combo=0,raf=null,alive=true,last=0;
+ openSheet(`<div class="row" style="justify-content:space-between;"><span class="hand" style="font-size:26px;line-height:1;">${label}</span><span class="tag" id="dgS">0%</span></div>
+  <div id="dg" style="position:relative;height:280px;border:2.5px solid #3a2a30;border-radius:12px;background:linear-gradient(#3a2440,#1f1622);overflow:hidden;display:grid;grid-template-columns:repeat(4,1fr);">${LN.map(()=>'<div style="border-right:1px solid rgba(255,255,255,.08);"></div>').join('')}<div style="position:absolute;left:0;right:0;top:236px;height:4px;background:#f0c24a;box-shadow:0 0 12px #f0c24a;"></div><div id="dgC" style="position:absolute;left:0;right:0;top:100px;text-align:center;color:#fff;font-family:'Patrick Hand',cursive;font-size:30px;"></div></div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">${LN.map((l,i)=>`<button class="btn" data-l="${i}" style="font-size:26px;padding:8px 0;touch-action:none;">${l}</button>`).join('')}</div><div style="font-size:12px;">Tap the arrow (or use arrow keys / WASD) when a step reaches the gold line.</div>`,b=>{
+  const box=b.querySelector('#dg'),C=b.querySelector('#dgC'),S=b.querySelector('#dgS');const W=box.clientWidth/4;
+  const hit=l=>{let best=null,bd=60;notes.forEach(n=>{if(n.l===l&&!n.h){const dd=Math.abs(n.y-236);if(dd<bd){bd=dd;best=n;}}});if(best){best.h=1;best.el.remove();const pts=bd<16?2:1;sc+=pts;combo++;C.textContent=(pts===2?'PERFECT':'GOOD')+(combo>2?' ×'+combo:'');C.style.color=pts===2?'#f0c24a':'#b9d3a8';sfx('swish');}else{combo=0;C.textContent='';}};
+  b.querySelectorAll('[data-l]').forEach(e=>e.onpointerdown=ev=>{ev.preventDefault();hit(+e.dataset.l);});
+  const kd=e=>{const l=KEYS[e.key.toLowerCase()];if(l==null||!alive)return;e.preventDefault();e.stopPropagation();if(!e.repeat)hit(l);};window.addEventListener('keydown',kd,true);
+  const step=ts=>{if(!alive)return;if(!t0){t0=ts;last=ts;}const t=(ts-t0)/1000,dt=Math.min(0.05,(ts-last)/1000);last=ts;
+   if(t<dur-1.5&&t>=next){const l=hsh(String(Math.floor(next*100)))%4;const el=document.createElement('div');el.textContent=LN[l];el.style.cssText=`position:absolute;left:${l*W+W/2-22}px;top:0;width:44px;height:44px;border-radius:50%;background:#e3a347;border:2.5px solid #fff;display:flex;align-items:center;justify-content:center;font-size:22px;color:#3a2a30;font-weight:700;`;box.appendChild(el);notes.push({l,y:-44,el,h:0});tot+=2;next+=t<8?0.62:t<16?0.48:0.4;}
+   notes.forEach(n=>{if(n.h)return;n.y+=210*dt;n.el.style.transform=`translateY(${n.y}px)`;if(n.y>290){n.h=1;n.el.remove();combo=0;}});notes=notes.filter(n=>!n.h);
+   const pct=tot?Math.round(sc/tot*100):0;S.textContent=pct+'% · '+Math.max(0,Math.ceil(dur-t))+'s';
+   if(t>=dur){alive=false;window.removeEventListener('keydown',kd,true);done(pct);return;}raf=requestAnimationFrame(step);};raf=requestAnimationFrame(step);
+  const obs=new MutationObserver(()=>{if(!document.body.contains(box)){alive=false;window.removeEventListener('keydown',kd,true);obs.disconnect();}});obs.observe($('sheetBox'),{childList:true});});}
+let PN=null,PM=null;
+function promMusic(on){try{if(!on){if(PM){clearInterval(PM.iv);PM.ac.close();PM=null;}return;}if(PM)return;const ac=new (window.AudioContext||window.webkitAudioContext)();const g=ac.createGain();g.gain.value=0.1;g.connect(ac.destination);let step=0;const ch=[[220,277,330],[196,247,294],[175,220,262],[196,247,311]];
+ const iv=setInterval(()=>{if(ac.state==='suspended')ac.resume();const t=ac.currentTime;if(step%4===0){const o=ac.createOscillator(),e=ac.createGain();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(45,t+0.15);e.gain.setValueAtTime(0.9,t);e.gain.exponentialRampToValueAtTime(0.001,t+0.2);o.connect(e);e.connect(g);o.start(t);o.stop(t+0.22);}
+  if(step%2===1){const b=ac.createBuffer(1,2205,44100),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length);const s=ac.createBufferSource(),hp=ac.createBiquadFilter();hp.type='highpass';hp.frequency.value=6000;s.buffer=b;s.connect(hp);hp.connect(g);s.start(t);}
+  if(step%16===0)ch[(step/16)%4].forEach(fq=>{const o=ac.createOscillator(),e=ac.createGain();o.type='triangle';o.frequency.value=fq;e.gain.setValueAtTime(0.0001,t);e.gain.linearRampToValueAtTime(0.16,t+0.05);e.gain.exponentialRampToValueAtTime(0.001,t+2.1);o.connect(e);e.connect(g);o.start(t);o.stop(t+2.2);});step++;},136);PM={ac,iv};}catch(e){}}
+function startProm(){const PR=SOC.prom;if(PR.night)return showEvents();closeSheet();PN={dance:null,photo:false,talked:{},snack:false,music:true};PR.cur=1;const formal=isFormal();save();
+ enterInterior('prom');promMusic(true);setTimeout(()=>{toast(formal?'You walk in under the balloon arch. Heads turn.':'No prom outfit\u2026 you came in your school uniform!');if(!formal)setTimeout(()=>toast('Chidi: \u201cUniform to prom? Bold. Very bold.\u201d'),1800);if(PR.partner)setTimeout(()=>toast(`${PR.partner} waves you over from the dance floor.`),3600);},900);}
+function promMenu(){const PR=SOC.prom,N=PN;if(!N)return;const who=PR.partner?`with ${PR.partner}${PR.mode==='friends'?' (friends)':PR.mode==='group'?' and the squad':''}`:'solo, and loving it';
+ openSheet(`<div style="background:linear-gradient(135deg,#4a3340,#6b4a7a);color:#fff3c4;border:2.5px solid #3a2a30;border-radius:12px;padding:10px;"><div class="hand" style="font-size:30px;line-height:1;">Prom Night</div><div style="font-size:13px;">You came ${who} · ${isFormal()?'formal ✓':'in school uniform'} · ${PR.decor} decorations hung by you</div></div>
+  <div style="font-size:13px;">Walk to a glowing spot in the hall, or jump straight in:</div>${[['dance','♪','Dance floor',N.dance!=null?`Best: ${N.dance}%`:'30-second dance-off'],['dj','◉','DJ booth',N.music?'Music is playing':'Music is paused'],['photo','◘','Photo booth',N.photo?'Photo saved':'Strike a pose'],['snack','☕','Refreshments',N.snack?'Done':'Zobo & small chops'],['talk','☺','Talk to classmates',`${Object.keys(N.talked).length} chats`],['awards','★','Awards & head home','Ends the night']].map(([a,g,t,s])=>`<button class="opt" data-a="${a}"><span class="glyph">${g}</span><div style="flex:1;text-align:left;"><b>${t}</b><small>${s}</small></div></button>`).join('')}<button class="btn" id="ok">Back to the hall</button>`,b=>{b.querySelector('#ok').onclick=closeSheet;b.querySelectorAll('[data-a]').forEach(e=>e.onclick=()=>{closeSheet();promAct(e.dataset.a);});});}
+function promLine(n){const PR=SOC.prom,N=PN,E=SOC.el;const L=[];if(E&&E.res)L.push(E.res.winner==='You'?'Mister/Madam President on the dance floor!':`Can you believe ${E.res.winner} is president?`);if(PR.partner===n)L.push('I\u2019m really glad we came together.');
+ L.push(isFormal()?(FCOM[PEOPLE[n].p]?FCOM[PEOPLE[n].p][0]:'You look ready for the formal!'):'Did you\u2026 come in uniform? Respect, honestly.');if(N.dance!=null)L.push(N.dance>=70?'Your dance moves! Who taught you?':'You danced like nobody was watching. Everybody was watching.');L.push(PEOPLE[n].hi);return L[hsh(n+SOC.day+Object.keys(N.talked).length)%L.length];}
+function promAct(a){const PR=SOC.prom,N=PN;if(!N||!PR)return;
+ if(a==='dance')return danceGame('Dance-off',30,p=>{N.dance=Math.max(N.dance||0,p);sfx(p>=70?'level':'coin');if(PR.partner)bond(PR.partner,2,'Danced together at prom');closeSheet();toast(p>=70?'The whole hall cheers!':'Nice moves!');});
+ if(a==='dj'){N.music=!N.music;IN&&IN.party&&IN.party(N.music);promMusic(N.music);toast(N.music?'DJ Kunle drops the beat. The lights start dancing.':'DJ Kunle pauses the music for a breather.');return;}
+ if(a==='photo'){if(N.photo)return toast('You already have your prom photo.');N.photo=true;sfx('power');big('SNAP!');addMem('Prom photo',PR.partner||'Solo',`${PR.partner?`You and ${PR.partner}`:'You'} under the balloon arch${isFormal()?' in your best outfit':' in your school uniform'}.`,'#6b4a7a');return;}
+ if(a==='snack'){if(N.snack)return toast('You\u2019ve had your fill of small chops.');N.snack=true;addXP(5);sfx('coin');return toast('Small chops, cake and a cold zobo. Perfect.');}
+ if(a==='talk'){const ns=Object.keys(PEOPLE);return openSheet(`<div class="hand" style="font-size:28px;">Who do you talk to?</div>${ns.map(n=>`<button class="opt" data-t="${n}"><span class="glyph" style="background:${PEOPLE[n].col};color:#fff;">${n[0]}</span><div style="flex:1;text-align:left;"><b>${n}${PR.partner===n?' (your prom buddy)':''}</b><small>${N.talked[n]?'\u201c'+N.talked[n]+'\u201d':PEOPLE[n].p}</small></div></button>`).join('')}<button class="btn" id="bk">Back to the hall</button>`,b=>{b.querySelector('#bk').onclick=closeSheet;b.querySelectorAll('[data-t]').forEach(e=>e.onclick=()=>{const n=e.dataset.t;if(!N.talked[n]){N.talked[n]=promLine(n);bond(n,1,'Chatted at prom');}promAct('talk');});});}
+ if(a==='awards')return promAwards();}
+function promAwards(){const PR=SOC.prom,N=PN;if(!N)return exitInterior.__real();const f=SOC.ward.fit;const dressed=(isFormal()?40:10)+(f.hair?6:0)+(f.extra?4:0)+(WI(f.full)&&WI(f.full).p>=220?8:0);const ns=Object.keys(PEOPLE);const npcBest=ns.map(n=>[n,30+hsh(n+'dr'+PR.term)%26]).sort((a,b)=>b[1]-a[1]);
+ const noms=[['You',dressed],npcBest[0],npcBest[1]];openSheet(`<div class="hand" style="font-size:28px;line-height:1;">On stage: vote Best Dressed</div><div style="font-size:13px;">Mr. Lawal reads the nominees. Judged on dress-code fit, coordination and effort; your vote counts like everyone else\u2019s.</div>${noms.map(([n])=>`<button class="opt" data-v="${n}"><span class="glyph">${n[0]}</span><div style="flex:1;text-align:left;"><b>${n}</b></div></button>`).join('')}`,b=>b.querySelectorAll('[data-v]').forEach(e=>e.onclick=()=>{const v=e.dataset.v;const tally=noms.map(([n,s])=>[n,s+(n===v?6:0)]).sort((a,b)=>b[1]-a[1]);
+  const A=[['Best Dressed',tally[0][0]]];const npcD=58+hsh('dn'+PR.term)%25;A.push(['Best Dance',(N.dance||0)>=npcD?'You':ns[hsh('dw'+PR.term)%ns.length]]);const help=PR.decor*2+(SOC.pres?SOC.pres.pro.filter(p=>p.prog>=PI(p.id).goal).length*2:0);A.push(['Most Helpful',help>=4?'You':'Zainab']);A.push(['Funniest Moment',isFormal()?'Chidi':'You (the uniform)']);
+  const mine=A.filter(x=>x[1].startsWith('You')).map(x=>x[0]);PR.night={dance:N.dance||0,awards:mine,partner:PR.partner,formal:isFormal()};PR.done=true;PR.cur=0;if(v!=='You'&&PEOPLE[v])bond(v,2,'You voted for them as Best Dressed');
+  addBank(15+mine.length*20);addXP(40+mine.length*25);addMem('Prom Night',PR.partner||'Friends',`${PR.partner?`Went with ${PR.partner}. `:''}${mine.length?'Won: '+mine.join(', ')+'.':'No awards, all the fun.'} Danced ${N.dance||0}%.`,'#6b4a7a');
+  feedPost('School',`Prom Night awards: ${A.map(([k,w])=>`${k}: ${w.startsWith('You')?'YOU':w}`).join(' · ')}. What a night!`);if(PR.partner)bond(PR.partner,3,'Went to prom together');save();sfx('level');
+  openSheet(`<div class="hand" style="font-size:20px;color:#a8553f;">Prom Night awards</div>${A.map(([k,w])=>`<div class="row" style="justify-content:space-between;font-weight:700;font-size:15px;padding:4px 8px;border-radius:8px;background:${w.startsWith('You')?'#fff3c4':'transparent'};"><span>${k}</span><span>${w}</span></div>`).join('')}<div class="stat3"><div><b>+${15+mine.length*20}</b><small>COINS</small></div><div><b>+${40+mine.length*25}</b><small>XP</small></div><div><b>${mine.length}</b><small>AWARDS</small></div></div><button class="btn pri" id="ok">Head home</button>`,x=>x.querySelector('#ok').onclick=()=>{closeSheet();PN=null;exitInterior.__real();});}));}
+{const _exI=exitInterior;exitInterior=function(){if(inId==='prom'&&PN&&SOC.prom&&!SOC.prom.night)return promAwards();if(inId==='prom'){promMusic(false);PN=null;}return _exI();};exitInterior.__real=()=>{promMusic(false);PN=null;_exI();};}
+WARD.push({id:'g_lav',s:'full',n:'Lavender mermaid gown',p:220,v:{shirt:'#b9a6dc',bottom:'#b9a6dc',gown:1,skirt:1},formal:1},{id:'g_champ',s:'full',n:'Champagne ball gown',p:280,v:{shirt:'#ead7b0',bottom:'#ead7b0',gown:1,skirt:1},formal:1},{id:'g_teal',s:'full',n:'Teal off-shoulder gown',p:240,v:{shirt:'#1f6e72',bottom:'#1f6e72',gown:1,skirt:1},formal:1},
+ {id:'g_rose',s:'full',n:'Rose lace gown',p:200,v:{shirt:'#d98aa8',bottom:'#d98aa8',gown:1,skirt:1},formal:1},{id:'g_aso',s:'full',n:'Aso-oke gown',p:260,v:{shirt:'#2c7a5a',bottom:'#d4a64a',gown:1,skirt:1},formal:1},{id:'s_tux',s:'full',n:'Navy tuxedo',p:260,v:{shirt:'#1e2a48',bottom:'#1e2a48',vest:1,trousers:1},formal:1},
+ {id:'s_teal',s:'full',n:'Teal senator',p:170,v:{shirt:'#2f6f6a',bottom:'#2f6f6a',trousers:1},formal:1},{id:'s_purple',s:'full',n:'Purple agbada',p:300,v:{coat:1,coatC:'#7d5aa6',bottom:'#7d5aa6',trousers:1},formal:1},{id:'s_kaftan',s:'full',n:'Pink kaftan',p:150,v:{shirt:'#d98aa8',bottom:'#d98aa8',trousers:1},formal:1});
+{const s=WI('f_suit');s.formal=0;s.n='Blazer & tie (smart, not prom formal)';Object.assign(WI('f_gown').v,{gown:1});WI('f_agbada').v.coatC='#efe6d2';}
+// ---------- hooks ----------
+{const _ce2=clsEnd;clsEnd=function(win,m,o){if(cls&&!cls.over&&GAMES[cls.kind]&&isBreak(cls.kind)){SOC.cnt.games++;if(SOC.pres)presDay(dOf());}return _ce2(win,m,o);};
+ const _so2=soccerOver;soccerOver=function(r){if(r.kind==='match'&&!r.quit){SOC.cnt.matches++;if(SOC.pres)presDay(dOf());}return _so2(r);};
+ const _it=inviteTick;inviteTick=function(dt){if(!sheetOpen){SOC.pt+=dt;if(SOC.pt>480)newDay();}return _it(dt);};}
+const SOC_APPS={events:showEvents,ward:()=>showWardrobe(),book:showBook};
+if(!SOC.el){startTerm();save();}
+if(SOC.ward.fit&&Object.keys(SOC.ward.fit).length)buildPlayer();
+// ---------- excursions ----------
+let EX=null;
+if(!SOC.exc)SOC.exc={term:termOf(),reg:false,done:false,missed:false};if(SOC.exc.reg&&!SOC.exc.dest)SOC.exc.dest='olumo-rock';
+const exD=()=>DESTINATIONS.find(d=>d.id===(SOC.exc.dest||'olumo-rock'))||DESTINATIONS[0];
+{const _st=startTerm;startTerm=function(){_st();SOC.exc={term:termOf(),reg:false,done:false,missed:false};feedPost('School','EXCURSION NOTICE: Our class trip is on Day 5! Choose Olumo Rock or the Taj Mahal and register by Day 4 under Excursion, then meet at the school gate on the day.');};}
+{const _nd=newDay;newDay=function(){_nd();const d=dOf(),X=SOC.exc;if(!X)return;if(d===5&&X.reg&&!X.done)setTimeout(()=>{toast('Excursion day! Meet Mrs. Adebayo at the school gate. Open Excursion when you\u2019re ready.');big('EXCURSION DAY');},900);
+ if(d===6&&X.reg&&!X.done&&!X.missed){X.missed=true;save();toast('You missed the '+exD().name+' trip. The next one is scheduled for next term.');feedPost('School','The class is back from '+exD().name+'! Photos coming soon.');}};}
+{const _se=showEvents;showEvents=function(){_se();const X=SOC.exc,d=dOf();const box=$('sheetBox');const strip=box.children[1];if(!strip||!X)return;
+ const s=X.done?'Done: you visited '+exD().name+' this term':X.missed?'Missed this term':d<5?`Day 5 · ${X.reg?'registered ✓':'registration open until Day 4'}`:d===5?(X.reg?'TODAY: meet at the school gate':'Today: registration closed'):'Finished for this term';
+ strip.insertAdjacentHTML('afterend',`<div class="opt" style="cursor:default;"><span class="glyph" style="background:#2f6f6a;color:#fff;">✈</span><div style="flex:1;"><b>Excursion: ${X.reg||X.done?exD().name:'choose a destination'}</b><small>${s}</small></div><button class="btn pri" id="exGo" style="font-size:15px;padding:3px 10px;">Open</button></div>`);box.querySelector('#exGo').onclick=()=>X.reg||X.done?tripDetail(exD()):showTrips();};}
+function showTrips(){openSheet(`<div class="hand" style="font-size:34px;line-height:1;">Where are we going?</div><div style="font-size:14px;">Choose a destination for your next class adventure.</div>
+ <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;">${DESTINATIONS.map((D,i)=>`<button data-d="${i}" style="text-align:left;border:2.5px solid #3a2a30;border-radius:12px;background:#fffdf6;padding:0;overflow:hidden;cursor:pointer;font-family:inherit;color:#3a2a30;box-shadow:0 3px 0 #3a2a30;${D.status!=='available'?'opacity:.78;':''}">
+  <div style="height:110px;background:${D.img?`url('${D.img}') center/cover`:`linear-gradient(135deg,${D.col},#3a2a30)`};position:relative;">${D.img?'':`<div class="hand" style="position:absolute;left:10px;bottom:6px;color:#fff;font-size:26px;line-height:1;opacity:.9;">${D.name}</div>`}<span style="position:absolute;right:8px;top:8px;background:${D.status==='available'?'#55745c':'#3a2a30'};color:#fff;border-radius:10px;padding:1px 8px;font-size:11px;font-weight:700;">${D.status==='available'?'AVAILABLE':'COMING SOON'}</span></div>
+  <div style="padding:8px 10px;"><b style="font-size:15px;">${D.name}</b><div style="font-size:11px;opacity:.75;">${D.loc} · ${D.cat}</div><div style="font-size:12px;line-height:1.3;margin-top:4px;">${D.desc}</div></div></button>`).join('')}</div><button class="btn" id="ok">Close</button>`,b=>{
+ b.querySelector('#ok').onclick=closeSheet;b.querySelectorAll('[data-d]').forEach(e=>e.onclick=()=>{const D=DESTINATIONS[+e.dataset.d];if(D.status!=='available'){toast(`${D.name} is coming soon. Olumo Rock and the Taj Mahal are open for trips right now.`);return;}tripDetail(D);});});}
+function tripDetail(D){const X=SOC.exc,d=dOf();const open=d<=4&&!X.done&&!X.missed;const mine=X.reg&&X.dest===D.id,other=X.reg&&X.dest&&X.dest!==D.id;const today=d===5&&mine&&!X.done;const isT=D.id==='taj-mahal-agra';
+ openSheet(`<div style="height:150px;border:2.5px solid #3a2a30;border-radius:12px;background:url('${D.img}') center/cover;"></div><div class="row" style="justify-content:space-between;"><span class="hand" style="font-size:32px;line-height:1;">${D.name}</span><span class="tag">${X.done&&X.dest===D.id?'Completed':mine?'Registered':other?'Another trip chosen':open?'Registration open':'Registration closed'}</span></div>
+  <div style="font-size:13px;">${D.loc} · ${D.cat}</div>
+  <div style="font-size:13px;line-height:1.55;"><b>Date:</b> Day 5 of term ${termOf()} (today is Day ${d})<br><b>Meet:</b> 7:30 a.m. at the school gate, with ${OLUMO.coordinator} (trip coordinator)<br><b>Plan:</b> ${isT?TAJ.plan:'coach to Abuja airport → flight to Ibadan → coach to Abeokuta → guided climb → home the same evening'}<br><b>Bring:</b> ${(isT?TAJ.bring:OLUMO.bring).join(', ')}</div>
+  <div class="card" style="padding:8px 10px;font-size:13px;"><b>Cost</b><br>${isT?'Transport, flights, entry tickets, shoe covers and lunch':'Transport, flights, entry and lunch'}: <b>funded by the school</b>. You pay <b>₦0</b>.${isT?' Souvenirs and kiosk snacks are optional, from your own money.':''}</div>
+  <div class="row" style="flex-wrap:wrap;gap:6px;">${today?'<button class="btn pri" id="go" style="flex:1;">Go to the assembly point</button>':''}${open&&!X.reg?'<button class="btn pri" id="reg" style="flex:1;">Register for the trip</button>':''}${open&&other?'<button class="btn pri" id="reg" style="flex:1;">Switch to this trip</button>':''}${open&&mine?'<button class="btn" id="can">Cancel registration</button>':''}${mine&&d<5&&!X.done?'<button class="btn" id="ff">Skip ahead to excursion day ▸</button>':''}<button class="btn" id="bk">Back</button></div>
+  ${X.missed?'<div style="font-size:13px;color:#a8553f;">You missed this term\u2019s trip. Register again next term.</div>':''}${d===5&&!X.reg&&!X.done?'<div style="font-size:13px;color:#a8553f;">Registration closed yesterday. The next trip is next term.</div>':''}`,b=>{
+  b.querySelector('#bk').onclick=showTrips;const q=id=>b.querySelector(id);
+  q('#reg')&&(q('#reg').onclick=()=>{X.reg=true;X.dest=D.id;X.prog=null;save();sfx('level');toast('Registered! See you at the school gate on Day 5.');feedPost('You',`Just registered for the ${D.name} excursion. Who else is coming?`);tripDetail(D);});
+  q('#can')&&(q('#can').onclick=()=>{X.reg=false;save();toast('Registration cancelled.');tripDetail(D);});
+  q('#ff')&&(q('#ff').onclick=()=>{while(dOf()<5)newDay();tripDetail(D);});
+  q('#go')&&(q('#go').onclick=()=>startTrip());});}
+function startTrip(){closeSheet();if(!EX)EX=createExcursion({names:Object.keys(PEOPLE),look:myLook,toast,sfx,openSheet,closeSheet,sheetOpen:()=>sheetOpen,memory:addMem,onEnd:tripOver,
+  bank:()=>SV.bank,spend:p=>{if(SV.bank<p)return false;addBank(-p);return true;},give:k=>{addItem(bag(),k,1);save();},xp:n=>addXP(n),bond:(n,d,w)=>PEOPLE[n]&&bond(n,d,w),
+  saveProg:p=>{SOC.exc.prog=JSON.parse(JSON.stringify(p));save();},loadProg:()=>SOC.exc.prog||null});
+ fade(()=>{mode='exc';pending=null;['top','dock','prompt','invite'].forEach(i=>$(i).classList.add('hide'));resize();EX.start({dest:SOC.exc.dest||'olumo-rock'});});}
+window.BTS_TEST={trip:d=>{SOC.exc.dest=d;startTrip();}};
+function tripOver(r){fade(()=>{mode='hub';['top','dock'].forEach(i=>$(i).classList.remove('hide'));paintTop();resize();
+ if(r.cancelled){toast('Trip cancelled. You stayed at school.');return;}const X=SOC.exc;const first=!X.done;X.done=true;
+ const isT=r.dest==='taj-mahal-agra',DN=isT?'the Taj Mahal':'Olumo Rock';let coins=0,xp=0;if(first&&r.completed){coins=40+r.quiz*5+(isT?r.disc*3:0);xp=100+r.quiz*10+(isT?r.visited*5:0);addBank(coins);addXP(xp);r.kids.forEach(n=>PEOPLE[n]&&bond(n,2,'Went to '+DN+' together'));SV.badges=SV.badges||{};const bk=isT?'taj':'olumo';const nb=!SV.badges[bk];SV.badges[bk]=1;if(nb)toast(isT?'Badge earned: Taj Mahal Explorer':'Badge earned: Olumo Rock Explorer');
+  if(isT){addMem('Excursion: Taj Mahal, Agra','Your class',`Day ${SOC.day}, term ${termOf()}. Explored the Taj Mahal with ${TAJ.coordinator}: ${r.visited}/${r.nvis} buildings, ${r.disc}/${r.ndisc} discoveries, ${r.photos} photo${r.photos===1?'':'s'}, reflection quiz ${r.quiz}/${r.qn}${r.bought&&r.bought.length?'. Souvenirs: '+r.bought.join(', '):''}. Classmates: ${r.kids.slice(0,5).join(', ')} & more.`,'#c97a9a');feedPost('School',`Our class is back from the Taj Mahal in Agra, India! Everyone accounted for. Thank you, ${TAJ.coordinator}.`);}
+  else{addMem('Excursion: Olumo Rock','Your class',`Climbed Olumo Rock in Abeokuta with ${OLUMO.coordinator}. Quiz ${r.quiz}/${r.qn}, ${r.photos} photo${r.photos===1?'':'s'}.`,'#2f6f6a');feedPost('School',`Our class is back from Olumo Rock, Abeokuta! Everyone accounted for. Thank you, ${OLUMO.coordinator}.`);}}
+ else if(!r.completed)addMem((isT?'Taj Mahal':'Olumo Rock')+' (left early)','',`Headed back early from the trip.`,'#8a6a3a');save();
+ openSheet(`<div class="hand" style="font-size:20px;color:#a8553f;">Back at school</div><div class="hand" style="font-size:40px;line-height:.9;">${r.completed?'What a trip!':'Home early'}</div>
+  <div class="stat3"><div><b>${r.quiz}/${r.qn}</b><small>QUIZ</small></div><div><b>${r.photos}</b><small>PHOTOS</small></div><div><b>+${coins}</b><small>COINS</small></div></div>${isT?`<div style="font-size:13px;">Buildings explored ${r.visited}/${r.nvis} · discoveries ${r.disc}/${r.ndisc}</div>`:''}${first&&r.completed?`<div style="font-size:13px;">+${xp} XP · friendship up with everyone on the trip · saved to your scrapbook.</div>`:'<div style="font-size:13px;">Rewards are given once per trip.</div>'}<button class="btn pri" id="ok">Done</button>`,b=>b.querySelector('#ok').onclick=closeSheet);});}
+// ---------- loop ----------
+let yaw=Math.PI/4;const PITCH=0.62;const camT=new THREE.Vector3(0,0,10);
+function hubStep(dt){let kf=(keys['w']||keys['arrowup']?1:0)-(keys['s']||keys['arrowdown']?1:0),kr=(keys['d']||keys['arrowright']?1:0)-(keys['a']||keys['arrowleft']?1:0);
+ if(!sheetOpen&&(kf||kr)){P.path=[];pending=null;const fx=-Math.sin(yaw),fz=-Math.cos(yaw);let mx=fx*kf-fz*kr,mz=fz*kf+fx*kr;const l=Math.hypot(mx,mz);mx/=l;mz/=l;const nx=P.x+mx*P.speed*dt,nz=P.z+mz*P.speed*dt;
+  if(world.free(nx,nz)){P.x=nx;P.z=nz;}else if(world.free(nx,P.z))P.x=nx;else if(world.free(P.x,nz))P.z=nz;P.face(mx,mz,dt);player.position.set(P.x,0,P.z);poseUpdate(player,dt,true);}
+ else{const mv=P.step(dt);poseUpdate(player,dt,mv);if(!mv&&pending&&!sheetOpen){const id=pending;pending=null;arrive(id);}}
+ let near=null;if(!P.path.length&&!sheetOpen){if(Math.hypot(P.x,P.z-23.5)<3.2)near='gate';else{const F=world.field;if(P.x>F.x0&&P.x<F.x1&&P.z>F.z0&&P.z<F.z1)near='field';else W.B.forEach(b=>{const d=world.doorOf(b.id);if(Math.hypot(P.x-d[0],P.z-d[1])<2.6)near=b.id;});}}
+ if(near){$('promptT').textContent=PLACES[near].n;$('promptB').textContent=near==='gate'?'Run! (E)':'Go in (E)';$('promptB').onclick=()=>near==='gate'?startRun():arrive(near);$('prompt').classList.remove('hide');}else $('prompt').classList.add('hide');}
+const clock={l:performance.now(),e:0,d(){const n=performance.now(),d=Math.min(0.05,(n-this.l)/1000);this.l=n;this.e+=d;return d;}};
+let lastIH=null;function loop(){requestAnimationFrame(loop);if(lastIH!==mode){lastIH=mode;$('intHud').classList.toggle('hide',mode!=='int');}if(canvas.clientWidth!==lw||canvas.clientHeight!==lh)resize();const dt=clock.d(),t=clock.e;
+ if(mode==='run'){if(!paused)R.update(dt,t);{const s=R.state();setTx('rDist',s.race?Math.min(100,Math.floor(s.dist))+' / 100m':Math.floor(s.dist)+'m');if(s.race&&s.on)setTx('rBest',s.t.toFixed(2)+'s');setTx('rBestL',s.race&&s.on?'Time':'Best');setTx('rCoins',String(s.coins));}
+  const pw=R.powers();{const ph=Object.entries(pw).map(([k,v])=>`<span style="background:${{magnet:'#c98a3c',double:'#a8323a',shield:'#4f6e8a'}[k]}">${{magnet:'Magnet',double:'x2',shield:'Shield'}[k]} ${Math.ceil(v)}s</span>`).join('');const pe=$('pws');if(pe.__v!==ph){pe.__v=ph;pe.innerHTML=ph;}}
+  post.render(R.scene,R.camera,t);return;}
+ if(mode==='class'&&cls){classStep(dt,t);post.render(CL.scene,CL.camera,t);return;}
+ if(mode==='soccer'&&SO){SO.update(dt,t);post.render(SO.scene,SO.camera,t);return;}
+ if(mode==='int'&&IN){IN.update(dt,t,sheetOpen?{}:keys);const pr=sheetOpen?null:IN.prompt();if(pr){setTx('promptT',pr.text);setTx('promptB',pr.btn+' (E)');$('promptB').onclick=pr.on;$('prompt').classList.remove('hide');}else $('prompt').classList.add('hide');post.render(IN.scene,IN.camera,t);return;}
+ if(mode==='exc'&&EX){EX.update(dt,t);post.render(EX.scene,EX.camera,t);return;}
+ if(mode==='pov'){povStep(dt,t);inviteTick(dt);return;}
+ if(mode==='hub'){hubStep(dt);inviteTick(dt);}else if(mode==='imp'){moveStep(dt);IMP.update(dt,t);impPrompt();}else yaw+=dt*0.05;
+ marker.material.opacity=Math.max(0,marker.material.opacity-dt);marker.scale.setScalar(1+(1-marker.material.opacity));
+ const moving=(mode==='hub'||mode==='imp')&&(P.path.length>0||keys['w']||keys['a']||keys['s']||keys['d']||keys['arrowup']||keys['arrowdown']||keys['arrowleft']||keys['arrowright']);if(moving||mode==='title')panOff.multiplyScalar(Math.max(0,1-dt*2.5));
+ const tgt=mode==='title'?new THREE.Vector3(0,0,4):player.position.clone().add(panOff);camT.lerp(tgt,Math.min(1,dt*6));
+ iso.position.set(camT.x+Math.sin(yaw)*Math.cos(PITCH)*120,camT.y+Math.sin(PITCH)*120,camT.z+Math.cos(yaw)*Math.cos(PITCH)*120);iso.lookAt(camT);
+ world.update(dt,t,camT);post.render(world.scene,iso,t);}
+resize();loop();
+$('loading').textContent=SV.runs?`Welcome back · Level ${SV.lvl}`:'Ready.';
+const setG=g=>{SV.gender=g==='girl'?'girl':'boy';g=SV.gender;$('face').src=`assets/${g}-face.png`;$('pBoy').classList.toggle('on',g==='boy');$('pGirl').classList.toggle('on',g==='girl');buildPlayer();save();};
+applyQ();
+$('rotOk').onclick=()=>$('rot').classList.add('off');
+$('pBoy').onclick=()=>setG('boy');$('pGirl').onclick=()=>setG('girl');setG(SV.gender);
+$('go').onclick=()=>{if(MOB){try{const d=document.documentElement,rq=d.requestFullscreen||d.webkitRequestFullscreen;if(rq&&!document.fullscreenElement){const p=rq.call(d);p&&p.then&&p.then(()=>screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})).catch(()=>{});}}catch(e){}}dailySetup();$('title').classList.add('hide');mode='hub';iso.zoom=1.25;iso.updateProjectionMatrix();['top','dock'].forEach(i=>$(i).classList.remove('hide'));paintTop();if(!SV.runs)setTimeout(()=>toast('Walk to the gate or tap Run to play "Late for Assembly".'),400);};
+</script>
+</body>
+</html>
