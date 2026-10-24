@@ -1,0 +1,16 @@
+{
+ "name": "Back to School",
+ "short_name": "Back to School",
+ "start_url": "./index.html",
+ "display": "fullscreen",
+ "orientation": "landscape",
+ "background_color": "#3b2b33",
+ "theme_color": "#3b2b33",
+ "icons": [
+  {
+   "src": "assets/boy-face.png",
+   "sizes": "256x256",
+   "type": "image/png"
+  }
+ ]
+}

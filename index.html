@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="manifest" href="manifest.json">
+<meta name="screen-orientation" content="landscape"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Back to School — v3</title>
 <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
@@ -100,7 +102,10 @@ a{color:var(--brick);}a:hover{color:var(--plum);}
 #rot{position:absolute;inset:0;z-index:40;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:#3b2b33;color:#f5ead3;}
 #rot .ph{width:56px;height:96px;border:3px solid #f5ead3;border-radius:12px;animation:rot 1.8s ease-in-out infinite;}
 @keyframes rot{0%,25%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
-@media (orientation:portrait) and (pointer:coarse){#rot:not(.off){display:flex;}}
+@media (orientation:portrait) and (pointer:coarse),(orientation:portrait) and (hover:none){#rot{display:flex;}}
+.fRow{display:flex;gap:10px;flex-wrap:wrap;}.fRow label{flex:1;min-width:150px;display:flex;flex-direction:column;gap:3px;font-size:13px;font-weight:700;}
+.fRow input,.fRow select{font-family:'Patrick Hand',cursive;font-size:22px;padding:4px 10px;border:2.5px solid var(--ink);border-radius:10px;background:#fff;color:var(--ink);}
+#fErr{font-size:13px;color:var(--brick);min-height:16px;}
 @media (max-height:520px){
  #top{top:6px;}#prof{padding:3px 10px 3px 3px;gap:6px;}#prof img{width:34px;height:34px;}#prof .hand{font-size:17px !important;}.xpbar{width:90px;}
  .chip{padding:3px 9px;font-size:13px;}.coin{width:15px;height:15px;}
@@ -125,7 +130,7 @@ a{color:var(--brick);}a:hover{color:var(--plum);}
 <div id="fade"></div>
 
 <div id="top" class="hide">
-  <div id="prof" class="card"><img id="face" src="assets/boy-face.png" alt="You"><div style="display:flex;flex-direction:column;gap:3px;"><span class="hand" style="font-size:22px;line-height:1;white-space:nowrap;">Level <span id="lvl">1</span> · <span id="rank">JSS Newbie</span></span><div class="xpbar"><div id="xp" style="width:0%"></div></div></div></div>
+  <div id="prof" class="card"><img id="face" src="assets/boy-face.png" alt="You"><div style="display:flex;flex-direction:column;gap:3px;"><span class="hand" id="pname" style="font-size:15px;line-height:1;opacity:.8;"></span><span class="hand" style="font-size:22px;line-height:1;white-space:nowrap;">Level <span id="lvl">1</span> · <span id="rank">JSS Newbie</span></span><div class="xpbar"><div id="xp" style="width:0%"></div></div></div></div>
   <div id="purse"><div class="card chip"><span class="coin"></span><span id="bank">0</span></div><button class="card chip" id="phBtn" style="cursor:pointer;font-family:inherit;color:inherit;position:relative;"><span style="width:11px;height:17px;border:2px solid var(--ink);border-radius:3px;display:inline-block;"></span>Phone<span id="phB" style="display:none;position:absolute;right:-6px;top:-6px;background:#a8553f;color:#fff;border:2px solid #fff;border-radius:10px;font-size:11px;padding:0 5px;"></span></button><div class="card chip" title="Daily streak">Day <span id="streak">1</span> streak</div></div>
 </div>
 <div id="dock" class="card hide"></div>
@@ -149,14 +154,19 @@ a{color:var(--brick);}a:hover{color:var(--plum);}
 <div id="big"></div>
 <div id="sheet" class="hide"><div id="sheetBox" class="card"></div></div>
 
-<div id="rot"><div class="ph"></div><div class="hand" style="font-size:30px;">Turn your phone sideways</div><div style="font-size:14px;opacity:.8;">Back to School plays best in landscape.</div><button class="btn" id="rotOk" style="font-size:16px;">Play in portrait anyway</button></div>
+<div id="rot"><div class="ph"></div><div class="hand" style="font-size:30px;">Turn your device sideways</div><div style="font-size:14px;opacity:.8;">Back to School is played in landscape. Rotate your device to continue.</div></div>
 <div id="title">
   <div id="tBox" class="card">
     <div class="hand" style="font-size:18px;color:var(--brick);">Unity Secondary School, Abuja</div>
     <div class="hand" style="font-size:60px;line-height:.85;">Back to School</div>
-    <div style="font-size:15px;line-height:1.5;">Skip class or sit through it. Then run, play and level up between activities.</div>
-    <div class="pick"><button id="pBoy" class="on"><img src="assets/boy-face.png" alt="">Boy</button><button id="pGirl"><img src="assets/girl-face.png" alt="">Girl</button></div>
-    <div class="row" style="flex-wrap:wrap;"><button class="btn pri" id="go" style="font-size:24px;">Enter the school →</button><span id="loading" style="font-size:13px;opacity:.7;">Building the town…</span></div>
+    <div id="newBox" style="display:flex;flex-direction:column;gap:10px;">
+     <div id="newMsg" style="font-size:15px;line-height:1.45;">Welcome, new student! Fill in your admission form to enrol in SS1.</div>
+     <div class="fRow"><label>Your name<input id="fName" maxlength="16" autocomplete="off" placeholder="e.g. Ada"></label><label>Your age<select id="fAge"><option value="">Choose…</option><option>14</option><option>15</option><option>16</option><option>17</option></select></label></div>
+     <div class="pick"><button id="pBoy" class="on"><img src="assets/boy-face.png" alt="">Boy</button><button id="pGirl"><img src="assets/girl-face.png" alt="">Girl</button></div>
+     <div id="fErr"></div>
+    </div>
+    <div id="backBox" class="hide" style="display:flex;align-items:center;gap:12px;"><img id="bFace" src="assets/boy-face.png" alt="" style="width:70px;height:70px;border-radius:50%;object-fit:cover;object-position:50% 30%;border:2px solid var(--ink);"><div style="flex:1;font-size:15px;line-height:1.4;"><b class="hand" id="bName" style="font-size:28px;display:block;line-height:1;"></b><span id="bInfo"></span></div></div>
+    <div class="row" style="flex-wrap:wrap;"><button class="btn pri" id="go" style="font-size:24px;">Enrol &amp; start →</button><button class="btn hide" id="newGame" style="font-size:15px;">Start a new game</button><span id="loading" style="font-size:13px;opacity:.7;">Building the town…</span></div>
   </div>
 </div>
 </div>
@@ -193,7 +203,7 @@ let lw=0,lh=0;let prSet=0;function applyPR(){const p=Math.min(devicePixelRatio,Q
 const KEY='bts3_save';const today=()=>new Date().toISOString().slice(0,10);
 const def={gender:'boy',bank:0,xp:0,lvl:1,best:0,runs:0,owned:['base'],wear:{shirt:'base',hair:'base',extra:'none'},streak:0,lastDay:'',quests:null,qDay:''};
 let SV;try{SV={...def,...JSON.parse(localStorage.getItem(KEY)||'{}')};}catch(e){SV={...def};}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(SV));}catch(e){}};
+const save=()=>{if(SV.__reset)return;try{localStorage.setItem(KEY,JSON.stringify(SV));}catch(e){}};
 const RANKS=['JSS Newbie','Class Clown','Back-bencher','Canteen Regular','Runner','Class Rep','Prefect','Senior Prefect','Head Boy/Girl','School Legend'];
 const xpNeed=l=>80+l*60;
 function addXP(n){SV.xp+=n;let up=false;while(SV.xp>=xpNeed(SV.lvl)){SV.xp-=xpNeed(SV.lvl);SV.lvl++;up=true;}if(up){big('LEVEL '+SV.lvl);sfx('level');const u=SHOP.filter(s=>s.lvl===SV.lvl);toast('New rank: '+RANKS[Math.min(RANKS.length-1,SV.lvl-1)]+(u.length?' · Unlocked in shop: '+u.map(x=>x.name).join(', '):''));}paintTop();save();}
@@ -829,9 +839,22 @@ resize();loop();
 $('loading').textContent=SV.runs?`Welcome back · Level ${SV.lvl}`:'Ready.';
 const setG=g=>{SV.gender=g==='girl'?'girl':'boy';g=SV.gender;$('face').src=`assets/${g}-face.png`;$('pBoy').classList.toggle('on',g==='boy');$('pGirl').classList.toggle('on',g==='girl');buildPlayer();save();};
 applyQ();
-$('rotOk').onclick=()=>$('rot').classList.add('off');
 $('pBoy').onclick=()=>setG('boy');$('pGirl').onclick=()=>setG('girl');setG(SV.gender);
-$('go').onclick=()=>{if(MOB){try{const d=document.documentElement,rq=d.requestFullscreen||d.webkitRequestFullscreen;if(rq&&!document.fullscreenElement){const p=rq.call(d);p&&p.then&&p.then(()=>screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})).catch(()=>{});}}catch(e){}}dailySetup();$('title').classList.add('hide');mode='hub';iso.zoom=1.25;iso.updateProjectionMatrix();['top','dock'].forEach(i=>$(i).classList.remove('hide'));paintTop();if(!SV.runs)setTimeout(()=>toast('Walk to the gate or tap Run to play "Late for Assembly".'),400);};
+const PF=SV.profile;const hasProg=!!(SV.runs||SV.soc||SV.xp||SV.bank);
+const landscape=()=>{try{const d=document.documentElement,rq=d.requestFullscreen||d.webkitRequestFullscreen;const lock=()=>screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{});if(rq&&!document.fullscreenElement){const p=rq.call(d);p&&p.then?p.then(lock).catch(lock):lock();}else lock();}catch(e){}};
+if(MOB)addEventListener('pointerdown',function f(){landscape();removeEventListener('pointerdown',f);},{once:true});
+if(PF){$('newBox').classList.add('hide');$('backBox').classList.remove('hide');$('bName').textContent='Welcome back, '+PF.name+'!';$('bFace').src=`assets/${SV.gender}-face.png`;$('bInfo').textContent=`Age ${PF.age} · Level ${SV.lvl} · Term ${termOf()}, Day ${dOf()}. Your progress on this device is saved.`;$('go').textContent='Continue →';$('newGame').classList.remove('hide');}
+else if(hasProg){$('newMsg').textContent='We found your saved progress on this device. Complete your admission form to continue.';$('go').textContent='Continue →';}
+$('pname').textContent=PF?PF.name:'';
+$('newGame').onclick=()=>openSheet(`<div class="hand" style="font-size:30px;line-height:1;">Start a new game?</div><div style="font-size:14px;">This deletes ${PF?PF.name+'’s':'the'} saved progress on this device: level, money, friendships, scrapbook and everything else. This cannot be undone.</div><div class="row" style="gap:8px;"><button class="btn" id="no" style="flex:1;">Keep playing</button><button class="btn pri" id="yes" style="flex:1;">Delete and start over</button></div>`,b=>{b.querySelector('#no').onclick=closeSheet;b.querySelector('#yes').onclick=()=>{SV.__reset=1;try{localStorage.removeItem(KEY);}catch(e){}location.reload();};});
+setInterval(()=>{if(mode==='hub'&&SV.profile&&!SV.__reset){SV.pos=[+P.x.toFixed(2),+P.z.toFixed(2)];save();}},3000);
+addEventListener('pagehide',()=>{if(mode==='hub'&&SV.profile&&!SV.__reset){SV.pos=[P.x,P.z];save();}});
+$('go').onclick=()=>{let first=false;if(!SV.profile){const nm=$('fName').value.trim().replace(/\s+/g,' '),ag=$('fAge').value;if(nm.length<2){$('fErr').textContent='Please write your name (at least 2 letters).';$('fName').focus();return;}if(!ag){$('fErr').textContent='Please choose your age.';return;}
+  SV.profile={name:nm.slice(0,16),age:+ag,since:today()};first=!hasProg;save();$('pname').textContent=SV.profile.name;}
+ if(SV.pos&&!first){P.place(SV.pos[0],SV.pos[1]);}
+ if(first)setTimeout(()=>{big('WELCOME, '+SV.profile.name.toUpperCase());setTimeout(()=>toast(`Principal: "Welcome to Unity Secondary School, ${SV.profile.name}. You are now an SS1 student. Make friends, work hard, and enjoy school life!"`),1600);},500);
+ else if(SV.profile)setTimeout(()=>toast(`Welcome back, ${SV.profile.name}!`),500);
+ if(MOB){try{const d=document.documentElement,rq=d.requestFullscreen||d.webkitRequestFullscreen;if(rq&&!document.fullscreenElement){const p=rq.call(d);p&&p.then&&p.then(()=>screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape').catch(()=>{})).catch(()=>{});}}catch(e){}}dailySetup();$('title').classList.add('hide');mode='hub';iso.zoom=1.25;iso.updateProjectionMatrix();['top','dock'].forEach(i=>$(i).classList.remove('hide'));paintTop();if(!SV.runs)setTimeout(()=>toast('Walk to the gate or tap Run to play "Late for Assembly".'),first?5200:1600);};
 </script>
 </body>
 </html>
