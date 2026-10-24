@@ -16,8 +16,8 @@ export function createTaj(X){const {h,kids,coord,camera}=X;
   {x:11.8,z:-40.4,y:3.5,r:1.4,t:'Read: The minarets',panel:'minaret'},{x:-1.8,z:-67.4,y:3.5,r:1.4,t:'Read: The Yamuna River',panel:'river'},
   {x:-6,z:-40.2,y:3.5,r:1.6,t:'Look up at the great dome',disc:'d_dome'},{x:12.2,z:-42.6,y:3.5,r:1.4,t:'Inspect the minaret',disc:'d_minaret'},{x:3.8,z:-43,y:3.5,r:1.2,t:'Study the main arch',disc:'d_arch'},
   {x:-11.2,z:-47,y:3.5,r:1.5,t:'Examine the marble inlay',disc:'d_inlay'},{x:0,z:-0.9,r:1.5,t:'Check the symmetry',disc:'d_sym'},{x:2,z:-68.6,y:3.5,r:1.6,t:'Look out over the river',disc:'d_river'},
-  {x:-4.6,z:46,r:1.4,t:'Read: How the gate frames the view',panel:'gate1'},{x:4.6,z:46,r:1.4,t:'Read: Lettering that grows',panel:'gate2',disc:'d_cal'},
-  {x:4.6,z:-34.2,y:1,r:1.3,t:S=>S.done.shoes?'Shoe covers on \u2713':'Collect shoe covers',act:'shoes'}];
+  {x:-4.6,z:46,r:1.4,t:'Read: How the gate frames the view',panel:'gate1'},{x:4.6,z:46,r:1.4,t:'Read: Lettering that grows',panel:'gate2',disc:'d_cal'}];
+ const SHOE_PTS=[{x:4.8,z:-34.8,y:1,r:2.6},{x:6.1,z:-34.4,y:1,r:2.2},{x:0,z:-33.6,y:1,r:3.2},{x:0,z:-36,y:1.6,r:2.4}];
  const DESC={d_dome:'d_dome',d_minaret:'d_minaret'};
  const panelSheet=(t,x,after)=>h.openSheet(`<div class="hand" style="font-size:28px;line-height:1;">${t}</div><div style="font-size:15px;line-height:1.45;">${x}</div><button class="btn pri" id="ok">Close</button>`,b=>b.querySelector('#ok').onclick=()=>{h.closeSheet();after&&after();});
  const save=()=>h.saveProg&&h.saveProg({done:S.done,photos:S.photos,bought:S.bought||[]});
@@ -36,12 +36,12 @@ export function createTaj(X){const {h,kids,coord,camera}=X;
  // ---------- guided stops ----------
  const needOk=k=>k==='tickets'?S.done.tickets:k==='shoes'?S.done.shoes:k==='flanks'?(S.done.v_mosque&&S.done.v_jawab):true;
  function hint(){const n=S.stop,D=S.done,ck=v=>v?'\u2713':'\u25cb';
-  if(n===0)return D.tickets?'\u2713 Tickets collected. Tap Continue when you\u2019re ready.':'Collect the class tickets inside the Ticket Office (red building, right side).';
+  if(n===0)return D.tickets?'\u2713 Tickets collected. Tap Continue when you\u2019re ready.':'Follow the gold arrow to the Ticket Office (red building, right). Go in and tap \u201cCollect the class tickets\u201d at the counter.';
   if(n===1)return 'Read the panels inside the gate, then walk through with the group.';
   if(n===2)return `Explore the garden. Photos: ${['ph_frame','ph_pool'].filter(k=>S.photos[k]).length}/2 · Group photo ${ck(S.photos.group)} · Symmetry ${ck(D.d_sym)}`;
-  if(n===3)return `${ck(D.shoes)} Shoe covers · Discoveries on the platform: ${['d_dome','d_minaret','d_arch','d_inlay','d_river'].filter(k=>D[k]).length}/5`;
+  if(n===3)return `${D.shoes?'\u2713 Shoe covers on':'\u25cb Shoe covers: follow the gold arrow to the stand by the stairs and tap \u201cPut on shoe covers\u201d'} · Discoveries on the platform: ${['d_dome','d_minaret','d_arch','d_inlay','d_river'].filter(k=>D[k]).length}/5`;
   if(n===4)return 'Explore quietly: inlay (east hall), calligraphy (west hall), reconstruction (north hall).';
-  if(n===5)return `${ck(D.v_mosque)} Mosque (west) · ${ck(D.v_jawab)} Jawab (east)`;
+  if(n===5)return `${ck(D.v_mosque)} Mosque (west) · ${ck(D.v_jawab)} Jawab (east) · follow the gold arrow`;
   if(n===6)return 'Free time: Visitor Centre, gift shop, kiosk. Tap "Ready to go home" when you\u2019re done.';return '';}
  function refreshObj(){if(!S)return;if(S.loc!=='out'){const I=INT[S.loc];X.obj(I.name,(S.stop===4&&S.loc==='tomb'?hint():I.sub));return;}if(S.ready&&S.stop>=0)X.obj(TAJ.stops[S.stop].title,hint());}
  function stopBegin(n){S.stop=n;S.ready=0;const s=TAJ.stops[n];X.obj(s.title,`Stop ${n+1} of 8 \u00b7 listen to ${CN}`);if(n===7)return finalHead();
@@ -51,8 +51,8 @@ export function createTaj(X){const {h,kids,coord,camera}=X;
   S.route=ROUTES[n].map(p=>p.slice());S.walking=1;S.st='GUIDING';S.nextStop=n===3?null:n+1;S.toDoor=n===3?1:0;X.obj('Follow '+CN,'Stay close to the group.');}
  function routeDone(){S.route=null;S.walking=0;if(S.toDoor){S.toDoor=0;S.awaitEnter=1;X.obj('Enter the mausoleum',`${CN} is waiting at the doorway. Walk up and go in with the group.`);h.toast(`${CN}: "In we go. Quietly, please."`);return;}
   if(S.nextStop!=null){S.awaitStop=S.nextStop;S.nextStop=null;X.obj('Regroup',`Gather round ${CN}.`);}}
- function coachMenu(){const s=TAJ.stops[S.stop]||{};const b=[];if(s.sign)b.push(['Read the sign','sign']);if(s.quiz)b.push(['Questions','quiz']);if(S.stop===2&&!S.photos.group)b.push(['Group photo','gp']);b.push([s.next?s.next+' \u25b8':'Okay','go']);
-  X.say(CN,[S.stop===6?'Enjoy your free time. Tell me when you\u2019re ready.':'Yes? Have a good look around. Shout when you\u2019re ready to move on.'],id=>{if(id==='sign'){S.done['sign'+S.stop]=1;save();return panelSheet(s.sign[0],s.sign[1],coachMenu);}if(id==='quiz')return X.quiz(s.quiz,()=>{S.done['quiz'+S.stop]=1;save();coachMenu();},'t'+S.stop);if(id==='gp')return groupPhoto();if(id==='go')next();},b);}
+ function coachMenu(){const s=TAJ.stops[S.stop]||{};const b=[];if(S.stop===3&&!S.done.shoes)b.push(['Shoe covers, please','shoes']);if(S.stop===0&&!S.done.tickets)b.push(['Where are the tickets?','tk']);if(s.sign)b.push(['Read the sign','sign']);if(s.quiz)b.push(['Questions','quiz']);if(S.stop===2&&!S.photos.group)b.push(['Group photo','gp']);b.push([s.next?s.next+' \u25b8':'Okay','go']);
+  X.say(CN,[S.stop===6?'Enjoy your free time. Tell me when you\u2019re ready.':'Yes? Have a good look around. Shout when you\u2019re ready to move on.'],id=>{if(id==='shoes'){doAct({act:'shoes'});return coachMenu();}if(id==='tk')return X.say(CN,['The Ticket Office is the red building on the right of the forecourt. Follow the gold arrow, go inside and talk to the clerk at the counter.']);if(id==='sign'){S.done['sign'+S.stop]=1;save();return panelSheet(s.sign[0],s.sign[1],coachMenu);}if(id==='quiz')return X.quiz(s.quiz,()=>{S.done['quiz'+S.stop]=1;save();coachMenu();},'t'+S.stop);if(id==='gp')return groupPhoto();if(id==='go')next();},b);}
  function groupPhoto(){if(S.photos.group)return;S.gp=3.4;X.obj('Group photo!','Everyone squeeze in by the marble tank\u2026');S.px=0;S.pz=10.7;S.py=0;S.yaw=0;
   setTimeout(()=>{if(!S)return;X.flash();h.sfx&&h.sfx('level');S.photos.group=1;S.gp=0;save();h.memory('Class photo at the Taj Mahal',X.NAMES.slice(0,4).join(', ')+' & co.',`The whole class with ${CN} by the marble tank, the Taj Mahal behind us.`,'#c97a9a');refreshObj();paintTop();},3500);}
  function finalHead(){S.st='FINAL_HEADCOUNT';let i=0;const n=()=>{if(!S)return;if(i<kids.length){h.toast(`${CN}: "${i+1}\u2026"`);i++;setTimeout(n,260);}else X.say(CN,['Everyone is here. Quick reflection before the coach: what did you learn today?'],()=>X.quiz(TAJ.recap,()=>X.say(CN,[`${kids.length+1} students, all present. You were respectful and curious today. Well done! To the coach.`],()=>{S.done.final=1;save();X.startReturn();}),'recap'));};n();}
@@ -93,7 +93,7 @@ export function createTaj(X){const {h,kids,coord,camera}=X;
   if(p.panel){const P=TAJ.panels[p.panel];mark('p_'+p.panel);if(p.disc)discover(p.disc,true);return panelSheet(P[0],P[1]);}
   if(p.disc)return discover(p.disc);
   const a=p.act;
-  if(a==='shoes'){if(D.shoes)return h.toast('Your shoe covers are on.');mark('shoes');h.sfx&&h.sfx('coin');return h.toast('Attendant: "Shoe covers on, please. They protect the marble." You pull them over your shoes.');}
+  if(a==='shoes'){if(D.shoes)return h.toast('Your shoe covers are on.');mark('shoes');h.sfx&&h.sfx('power');X.flash();h.toast('You pull the white shoe covers over your shoes. They protect the marble floor. \u2713');paintTop();return;}
   if(a==='tickets'){if(D.tickets)return X.say('Ticket clerk',['Your group is all set. Remember: no photos inside the mausoleum, and the monument is closed on Fridays.']);
    return X.say('Ticket clerk',['Namaste! You must be the school group from Nigeria.',`Here are your tickets: one for each student and one for ${CN}. Your school has paid for everything.`,'Shoe covers are at the stand by the platform stairs. Enjoy your visit!'],()=>{mark('tickets');h.sfx&&h.sfx('level');h.toast('Got the class tickets! Take them back to '+CN+'.');paintTop();});}
   if(a==='staff'){mark('staff');return X.say('Information officer',['Welcome! The Great Gate is straight ahead, past the meeting point.','The tomb is at the far end of the garden, by the river. The mosque is on the west side and the jawab on the east.','Take a map from the table if you like. And please keep to the paths.'],()=>{});}
@@ -107,19 +107,34 @@ export function createTaj(X){const {h,kids,coord,camera}=X;
   if(a==='sym'){if(D.symq)return h.toast('You\u2019ve solved the symmetry puzzle. Nice work.');return X.quiz(TAJ.sym,()=>{mark('symq');},'sym');}
   if(a==='bench'){S.sit=p.b;return;}}
  function discover(id,quiet){const d=TAJ.disc.find(x=>x.id===id);if(S.done[id]){if(!quiet)h.toast(d.t+': '+d.x);return;}mark(id);h.sfx&&h.sfx('power');const n=TAJ.disc.filter(x=>S.done[x.id]).length;if(!quiet)panelSheet('Discovery: '+d.t,`${d.x}<br><br><b>${n}/${TAJ.disc.length}</b> discoveries found.`);else h.toast(`Discovery: ${d.t} (${n}/${TAJ.disc.length})`);}
- function actions(){let act=null;if(!S.off||X.dlg()||h.sheetOpen()||S.gp>0){X.setAct(null);return;}
+ function actions(){if(!S.off||X.dlg()||h.sheetOpen()||S.gp>0){X.setAct(null);return;}
   if(S.sit){X.setAct('Stand up',()=>{S.sit=null;});return;}
-  const near=(p,r)=>Math.hypot(S.px-p.x,S.pz-p.z)<r&&Math.abs((p.y||0)-S.py)<1.2;
-  if(S.loc==='out'){const c=coord;if(S.ready&&Math.hypot(S.px-c.x,S.pz-c.z)<3)act=['Talk to '+CN,coachMenu];
-   if(!act)for(const [id,D] of Object.entries(DOORS)){if(near(D,1.9)){if(id==='tomb'&&!S.done.shoes){act=['Shoe covers needed first',()=>h.toast('Collect shoe covers at the stand by the stairs.')];break;}act=[(id==='tomb'&&S.awaitEnter?'Go inside with the group: ':'Enter: ')+D.n,()=>enterInterior(id)];break;}}
-   if(!act)for(const p of OPTS){if(near(p,p.r)){act=[typeof p.t==='function'?p.t(S):p.t,()=>doAct(p)];break;}}
-   if(!act)for(const b of OUT.BENCH){if(Math.hypot(S.px-b.x,S.pz-b.z)<1.3){act=['Sit on the bench',()=>doAct({act:'bench',b})];break;}}
-   if(!act){const sp=PHOTOS.find(p=>p.loc==='out'&&!S.photos[p.id]&&near(p,2.6));if(sp)act=['Take a photo: '+sp.t,photo];}}
-  else{const I=INT[S.loc];const ex=I.exit;const exits=[[ex.x,ex.z],...(ex.also||[])];if(exits.some(([x,z])=>Math.hypot(S.px-x,S.pz-z)<ex.r+0.4))act=['Leave: '+I.name,exitInterior];
-   if(!act&&S.coordIn&&S.ready&&Math.hypot(S.px-coord.ip.x,S.pz-coord.ip.z)<2.6)act=['Talk to '+CN,coachMenu];
-   if(!act)for(const p of I.pts){if(near(p,p.r)){act=[typeof p.t==='function'?p.t(S):p.t,()=>doAct(p)];break;}}
-   if(!act&&S.loc==='info'){const sp=PHOTOS.find(p=>p.loc==='info'&&!S.photos[p.id]&&near(p,2.4));if(sp)act=['Take a photo: '+sp.t,photo];}}
-  X.setAct(act&&act[0],act&&act[1]);}
+  const C=[],dist=p=>Math.hypot(S.px-p.x,S.pz-p.z),near=(p,r)=>dist(p)<r&&Math.abs((p.y||0)-S.py)<1.4,add=(pri,p,t,fn)=>C.push({pri,d:dist(p),t,fn});
+  if(S.loc==='out'){const c=coord,D=S.done;
+   if(S.ready&&near({x:c.x,z:c.z,y:c.y},3.4))add(S.stop===3&&!D.shoes?0:1,c,'Talk to '+CN,coachMenu);
+   if(!D.shoes)SHOE_PTS.forEach(p=>{if(near(p,p.r))add(0,p,'Put on shoe covers',()=>doAct({act:'shoes'}));});
+   for(const [id,Dr] of Object.entries(DOORS)){if(!near(Dr,2.6))continue;if(id==='tomb'&&!D.shoes){add(0,Dr,'Put on shoe covers',()=>doAct({act:'shoes'}));continue;}
+    const req=(id==='ticket'&&!D.tickets)||(id==='tomb'&&S.awaitEnter)||((id==='mosque'||id==='jawab')&&S.stop===5&&!D['v_'+id]);add(req?0:2,Dr,(id==='tomb'&&S.awaitEnter?'Go inside with the group: ':'Enter: ')+Dr.n,()=>enterInterior(id));}
+   OPTS.forEach(p=>{if(near(p,p.r+0.7))add(p.disc&&!D[p.disc]?2:3,p,typeof p.t==='function'?p.t(S):p.t,()=>doAct(p));});
+   OUT.BENCH.forEach(b=>{if(dist(b)<1.4)add(5,b,'Sit on the bench',()=>doAct({act:'bench',b}));});
+   PHOTOS.forEach(p=>{if(p.loc==='out'&&!S.photos[p.id]&&near(p,3))add(S.stop===2&&(p.id==='ph_pool'||p.id==='ph_frame')?1:4,p,'Take a photo: '+p.t,photo);});
+   if(S.stop===2&&S.ready&&!S.photos.group&&near({x:0,z:11},4))add(1,{x:0,z:11},'Group photo by the tank',groupPhoto);}
+  else{const I=INT[S.loc];const ex=I.exit;[[ex.x,ex.z],...(ex.also||[])].forEach(([x,z])=>{if(Math.hypot(S.px-x,S.pz-z)<ex.r+0.6)add(S.loc==='tomb'&&S.coordIn&&S.ready?1:3,{x,z},S.loc==='tomb'&&S.coordIn?'Head back outside with the group':'Leave: '+I.name,exitInterior);});
+   if(S.coordIn&&S.ready&&near(coord.ip,3))add(1,coord.ip,'Talk to '+CN,coachMenu);
+   I.pts.forEach(p=>{if(near(p,p.r+0.6))add(p.act==='tickets'&&!S.done.tickets?0:2,p,typeof p.t==='function'?p.t(S):p.t,()=>doAct(p));});
+   PHOTOS.forEach(p=>{if(p.loc===S.loc&&!S.photos[p.id]&&near(p,2.8))add(4,p,'Take a photo: '+p.t,photo);});}
+  C.sort((a,b)=>a.pri-b.pri||a.d-b.d);const act=C[0];X.setAct(act&&act.t,act&&act.fn);}
+ // gold guide arrow over the next required task
+ const arrow=new THREE.Group();{const m=new THREE.MeshBasicMaterial({color:'#f0c24a'}),k=new THREE.MeshBasicMaterial({color:'#3a2a30'});const c=new THREE.Mesh(new THREE.ConeGeometry(0.42,0.8,4),m);c.rotation.x=Math.PI;c.position.y=0.4;const o=new THREE.Mesh(new THREE.ConeGeometry(0.52,0.95,4),k);o.rotation.x=Math.PI;o.position.y=0.42;o.scale.set(1,1,1);arrow.add(o,c);const r=new THREE.Mesh(new THREE.RingGeometry(0.7,0.95,28),new THREE.MeshBasicMaterial({color:'#f0c24a',transparent:true,opacity:0.8,side:THREE.DoubleSide}));r.rotation.x=-Math.PI/2;r.userData.ring=1;arrow.add(r);arrow.renderOrder=5;}
+ function goal(){if(!S.off||S.walking||S.gp>0)return null;const D=S.done;
+  if(S.loc==='ticket'&&!D.tickets)return{x:-1.67,z:-2.0,y:0};if(S.loc!=='out')return null;
+  if(!D.tickets&&S.stop>=0)return{x:15.6,z:73.5,y:0};
+  if(S.stop===3&&!D.shoes)return{x:4.8,z:-34.9,y:1};
+  if(S.awaitEnter)return{x:0,z:-43.1,y:3.5};
+  if(S.stop===5&&S.ready){if(!D.v_mosque)return{x:-36,z:-54,y:1};if(!D.v_jawab)return{x:36,z:-54,y:1};}
+  if(S.awaitStop!=null)return{x:coord.x,z:coord.z,y:coord.y,c:1};
+  if(S.stop===2&&S.ready&&!S.photos.group)return{x:0,z:11,y:0};return null;}
+ function arrowStep(t){const g=goal();if(!g||Math.hypot(S.px-g.x,S.pz-g.z)<1.6){arrow.visible=false;return;}if(arrow.parent!==S.sc)S.sc.add(arrow);arrow.visible=true;const up=g.c?2.6:1.9;arrow.position.set(g.x,g.y+0.02,g.z);arrow.children[0].position.y=arrow.children[1].position.y=up+Math.sin(t*3)*0.18;arrow.children[0].rotation.y=arrow.children[1].rotation.y=t*1.5;arrow.children[2].visible=!g.c;}
  // ---------- per-frame ----------
  function coordOut(dt,t){const c=coord;let mv=false;const P=pExt();if(S.coordIn)return;
   if(S.route&&S.route.length){const [tx,tz]=S.route[0];const far=Math.hypot(P.x-c.x,P.z-c.z)>18;if(far&&S.st==='GUIDING'){c.wait=(c.wait||0)+dt;if(c.wait>1.5&&!S.warned){S.warned=1;h.toast(`${CN}: "Stay with the group, please!"`);}}
@@ -152,7 +167,7 @@ export function createTaj(X){const {h,kids,coord,camera}=X;
   Y.position.set(S.px,S.py,S.pz);Y.rotation.y=S.gp>0?0:S.yaw;poseUpdate(Y,dt,mv,null,1.1);}
  function rules(dt){S.ruleT-=dt;if(S.loc!=='out')return;
   if(!S.done.tickets&&S.pz<51.6&&S.pz>40&&Math.abs(S.px)<6){S.pz=52.4;if(S.ruleT<=0){S.ruleT=3;h.toast('Guard: "Tickets first, please. The Ticket Office is in the forecourt."');}}
-  if(!S.done.shoes&&S.py>1.25&&S.pz<-34&&S.pz>-38.4&&Math.abs(S.px)<3.3){S.pz=-33.6;S.py=1;if(S.ruleT<=0){S.ruleT=3;h.toast('Attendant: "Shoe covers on first, please. They\u2019re at the stand."');}}
+  if(!S.done.shoes&&S.py>1.25&&S.pz<-34&&S.pz>-38.4&&Math.abs(S.px)<3.3){S.pz=-33.6;S.py=1;if(S.ruleT<=0){S.ruleT=3;h.toast('Attendant: "Shoe covers on first, please. Tap \u201cPut on shoe covers\u201d."');}}
   if(S.pz>42&&S.pz<50&&Math.abs(S.px)<2.6)mark('v_gate');}
  function chatter(dt){S.chatT-=dt;if(S.chatT>0||!S.off)return;S.chatT=16+Math.random()*10;const pool=S.loc==='out'?kids.filter(k=>k.o.visible&&!k.inside&&Math.hypot(k.x-S.px,k.z-S.pz)<12):S.inKids;const k=pool[Math.floor(Math.random()*pool.length)];if(!k)return;
   const L_=S.loc==='tomb'?['(whispering) It\u2019s so quiet in here.','(whispering) Look at the flowers in the marble.','(whispering) The screen looks like lace.']:S.loc!=='out'?['Look at this!','Can we stay a bit longer?','I\u2019m reading everything.']:S.pz>52?['It\u2019s so much bigger than in the pictures.','Can we visit the gift shop later?','I can see a dome over the gate!']:S.pz>-30?['The pool is like a mirror.','Everything matches on both sides!','Take my picture by the water.']:['The marble is warm from the sun.','Look how tall the minarets are.','You can see the river from here!'];
@@ -169,7 +184,7 @@ export function createTaj(X){const {h,kids,coord,camera}=X;
   if(S.st==='ARRIVING'){const k=clamp(S.t/5,0,1),e=1-Math.pow(1-k,3);OUT.coach.position.x=95-(95-36)*e;
    if(S.t>5.4&&!S.off){S.off=1;kids.forEach(k=>k.o.visible=true);coord.o.visible=true;you().visible=true;S.route=[[22,92],[6,88],[0,84],[0,72]];S.walking=1;S.st='GUIDING';S.nextStop=0;h.toast('Doors open. Everyone off the coach!');X.obj('Follow '+CN,'Walk with the class to the meeting point in the forecourt.');paintTop();}}
   if(S.loc==='out'){coordOut(dt,t);kidsOut(dt,t);}else interiorStep(dt,t);
-  playerStep(dt);rules(dt);actions();chatter(dt);cameraStep(dt);}
+  playerStep(dt);rules(dt);actions();arrowStep(t);chatter(dt);cameraStep(dt);}
  function paintTop(){if(!S)return;const t=[['photo','Camera'],['check','Checklist']];if(S.ready&&S.stop>=0&&S.stop<7&&TAJ.stops[S.stop].next)t.push(['next',TAJ.stops[S.stop].next+' \u25b8',1]);if(S.off)t.push(['regroup','Return to group']);t.push(['quit','Leave trip']);X.tops(t);}
  function top(id){if(id==='photo')photo();if(id==='check')checklist();if(id==='next')next();if(id==='regroup')regroup();}
  function leave(){if(!S)return;if(S.loc!=='out'){S.inKids.forEach(k=>k.inside=0);S.inKids=[];S.coordIn=0;S.loc='out';}}
